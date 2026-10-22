@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL-тренажер: кредитні картки | SQL Trainer: Credit Cards</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb;--ok:#14803c;--bad:#b42318;--code:#0f1722;--codeink:#e6edf5}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff;--ok:#4cc27a;--bad:#ff8a7a;--code:#0a0f15;--codeink:#e6edf5}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+header .in,main{max-width:1180px;margin:0 auto}
+h1{margin:0;font-size:20px}
+header p{margin:4px 0 0;color:var(--mut)}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.pill{border:1px solid var(--line);border-radius:99px;padding:3px 10px;color:var(--mut);font-size:13px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:8px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+#list{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto}
+.t{display:flex;gap:8px;text-align:left;align-items:flex-start;width:100%}
+.t.cur{border-color:var(--acc)}
+.t .n{color:var(--mut);min-width:22px}
+.lvl{font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--line);color:var(--mut);margin-left:auto}
+.done::after{content:"✓";color:var(--ok);margin-left:6px}
+textarea{width:100%;min-height:150px;background:var(--code);color:var(--codeink);border:1px solid var(--line);border-radius:10px;padding:10px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#msg{padding:10px 12px;border-radius:10px;margin:8px 0;display:none}
+#msg.ok{display:block;background:rgba(20,128,60,.12);color:var(--ok)}
+#msg.bad{display:block;background:rgba(180,35,24,.12);color:var(--bad)}
+#msg.info{display:block;background:rgba(11,107,203,.1);color:var(--acc)}
+.res{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--card)}
+.schema code{display:block;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;color:var(--mut)}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--acc)}
+pre{background:var(--code);color:var(--codeink);padding:10px;border-radius:10px;overflow:auto;margin:8px 0 0}
+.mut{color:var(--mut)}
+</style>
+</head>
+<body>
+<header><div class="in">
+<h1>SQL-тренажер: портфель кредитних карток / SQL Trainer: credit card portfolio</h1>
+<p>SQL виконується у вашому браузері (SQLite). Дані синтетичні, згенеровані на льоту. · SQL runs in your browser (SQLite). Data is synthetic.</p>
+<div class="bar">
+<button id="lang">EN</button>
+<span class="pill" id="score">0/0</span>
+<button id="reset"></button>
+<a href="index.html" class="pill">← index</a>
+</div></div></header>
+<main>
+<aside class="panel"><div id="list"></div></aside>
+<section>
+<div class="panel">
+<div id="head"></div>
+<p id="desc"></p>
+<textarea id="sql" spellcheck="false" placeholder="SELECT ..."></textarea>
+<div class="row">
+<button class="pri" id="run"></button>
+<button id="check"></button>
+<button id="hint"></button>
+<button id="sol"></button>
+</div>
+<div id="msg"></div>
+<div id="out"></div>
+</div>
+<div class="panel schema" style="margin-top:16px"><b id="sch"></b>
+<code id="schema"></code>
+</div>
+</section>
+</main>
+<script>
+"use strict";
+/* ---------- i18n ---------- */
+const I18N={
+uk:{run:"Виконати (Ctrl+Enter)",check:"Перевірити",hint:"Підказка",sol:"Показати розв'язок",reset:"Скинути прогрес",sch:"Схема даних",
+ok:"Вірно! Результат збігається з еталоном.",bad:"Результат не збігається з еталоном. Перевірте умову, фільтри та агрегації.",
+cols:"Кількість колонок не збігається: очікується ",rows:"Кількість рядків не збігається: очікується ",
+empty:"Введіть запит.",err:"Помилка SQL: ",ready:"База готова.",loading:"Завантаження SQLite…",
+rowsn:"рядків",conf:"Показати розв'язок? Спробуйте спершу підказку.",solfor:"Еталонний розв'язок",tasks:"завдань"},
+en:{run:"Run (Ctrl+Enter)",check:"Check",hint:"Hint",sol:"Show solution",reset:"Reset progress",sch:"Data schema",
+ok:"Correct! Your result matches the reference.",bad:"Result does not match the reference. Check filters and aggregations.",
+cols:"Column count mismatch: expected ",rows:"Row count mismatch: expected ",
+empty:"Type a query.",err:"SQL error: ",ready:"Database ready.",loading:"Loading SQLite…",
+rowsn:"rows",conf:"Show the solution? Try the hint first.",solfor:"Reference solution",tasks:"tasks"}};
+let lang="uk";
+const T=k=>I18N[lang][k];
+
+/* ---------- Seeded data ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mulberry32(20261022);
+const pick=a=>a[Math.floor(rnd()*a.length)];
+const wpick=(a,w)=>{let s=w.reduce((x,y)=>x+y,0),r=rnd()*s;for(let i=0;i<a.length;i++){r-=w[i];if(r<=0)return a[i]}return a[a.length-1]};
+const MONTHS=[];for(let i=0;i<12;i++){const y=2025+Math.floor((9+i)/12),m=((9+i)%12)+1;MONTHS.push(y+"-"+String(m).padStart(2,"0"))}
+// MONTHS: 2025-10 .. 2026-09
+const REGIONS=["Дніпро","Київ","Львів","Харків","Одеса","Запоріжжя"];
+const MCC=[[5411,"Супермаркети"],[5812,"Ресторани"],[5541,"АЗС"],[5732,"Електроніка"],[4121,"Таксі"],[5651,"Одяг"],[4900,"Комунальні"],[5912,"Аптеки"],[7832,"Кіно"],[4814,"Телеком"]];
+function pad(n){return String(n).padStart(2,"0")}
+function buildDB(SQL){
+ const db=new SQL.Database();
+ db.run(`CREATE TABLE customers(customer_id INTEGER PRIMARY KEY, region TEXT, segment TEXT, age INTEGER, income_uah INTEGER, signup_date TEXT);
+ CREATE TABLE cards(card_id INTEGER PRIMARY KEY, customer_id INTEGER, product TEXT, credit_limit INTEGER, open_date TEXT, status TEXT);
+ CREATE TABLE transactions(txn_id INTEGER PRIMARY KEY, card_id INTEGER, txn_date TEXT, amount REAL, mcc INTEGER, merchant_category TEXT, channel TEXT, status TEXT);
+ CREATE TABLE monthly_snapshots(card_id INTEGER, month TEXT, balance REAL, dpd INTEGER, min_payment_due REAL, paid_amount REAL);`);
+ const ci=db.prepare("INSERT INTO customers VALUES(?,?,?,?,?,?)");
+ const ki=db.prepare("INSERT INTO cards VALUES(?,?,?,?,?,?)");
+ const ti=db.prepare("INSERT INTO transactions VALUES(?,?,?,?,?,?,?,?)");
+ const si=db.prepare("INSERT INTO monthly_snapshots VALUES(?,?,?,?,?,?)");
+ db.run("BEGIN");
+ const cards=[];let cardId=1000,txn=1;
+ for(let c=1;c<=400;c++){
+  const seg=wpick(["mass","affluent","premium"],[65,28,7]);
+  const inc={mass:[14000,35000],affluent:[35000,90000],premium:[90000,250000]}[seg];
+  const income=Math.round((inc[0]+rnd()*(inc[1]-inc[0]))/500)*500;
+  const sy=2019+Math.floor(rnd()*6);
+  ci.run([c,pick(REGIONS),seg,21+Math.floor(rnd()*44),income,`${sy}-${pad(1+Math.floor(rnd()*12))}-${pad(1+Math.floor(rnd()*28))}`]);
+  const nc=wpick([1,2,3],[72,23,5]);
+  for(let k=0;k<nc;k++){
+   const prod=seg==="premium"?wpick(["Gold","Platinum"],[35,65]):seg==="affluent"?wpick(["Classic","Gold","Platinum"],[25,55,20]):wpick(["Classic","Gold"],[80,20]);
+   const base={Classic:15000,Gold:40000,Platinum:100000}[prod];
+   const lim=Math.round(base*(0.6+rnd()*1.4)/1000)*1000;
+   const status=wpick(["active","blocked","closed"],[88,5,7]);
+   const oy=2021+Math.floor(rnd()*5);
+   ki.run([++cardId,c,prod,lim,`${oy}-${pad(1+Math.floor(rnd()*12))}-${pad(1+Math.floor(rnd()*28))}`,status]);
+   cards.push({id:cardId,lim,status,seg,income,prod,tr:rnd()<0.6});
+  }
+ }
+ const STATE=[0,10,40,70,100];
+ for(const k of cards){
+  if(k.status==="closed"&&rnd()<0.6)continue;
+  let st=0;
+  const activity=k.status==="active"?(rnd()<0.07?0:0.4+rnd()*1.6):(rnd()<0.3?0.3:0);
+  for(const mo of MONTHS){
+   // dpd state machine
+   const r=rnd();
+   if(st===0){st=r<0.04?10:0}
+   else if(st===10){st=r<0.45?0:r<0.90?40:10}
+   else if(st===40){st=r<0.25?0:r<0.75?70:40}
+   else if(st===70){st=r<0.15?0:r<0.70?100:70}
+   else{st=r<0.10?0:100}
+   // transactions
+   const nt=Math.round(activity*(3+rnd()*9));
+   let spend=0;
+   for(let i=0;i<nt;i++){
+    const mm=pick(MCC);
+    const ch=wpick(["POS","ECOM","ATM"],[55,38,7]);
+    const amt=Math.round((60+rnd()*rnd()*5200*(k.lim/30000+0.5))*100)/100;
+    const declined=rnd()<(st>=70?0.30:ch==="ECOM"?0.07:0.035);
+    ti.run([txn++,k.id,`${mo}-${pad(1+Math.floor(rnd()*28))}`,amt,mm[0],mm[1],ch,declined?"declined":"approved"]);
+    if(!declined)spend+=amt;
+   }
+   let bal=Math.min(k.lim*0.98,Math.round((spend*(k.tr?0.9:1.6)+rnd()*k.lim*0.35)*100)/100);
+   if(k.status==="closed")bal=0;
+   const minp=Math.round(bal*0.05*100)/100;
+   let paid;
+   if(st>0)paid=0;else paid=k.tr?bal:Math.round(minp*(1+rnd()*0.8)*100)/100;
+   si.run([k.id,mo+"-01",bal,st,minp,paid]);
+  }
+ }
+ db.run("COMMIT");
+ ci.free();ki.free();ti.free();si.free();
+ return db;
+}
+
+/* ---------- Tasks ---------- */
+const TASKS=[
+{lv:"Easy",ord:false,
+ t:["Активні картки","Active cards"],
+ d:["Скільки карток мають статус 'active'? Поверніть одне число.","How many cards have status 'active'? Return a single number."],
+ h:["COUNT(*) + WHERE status = 'active'.","COUNT(*) with WHERE status = 'active'."],
+ s:"SELECT COUNT(*) FROM cards WHERE status = 'active';"},
+{lv:"Easy",ord:true,
+ t:["Клієнти за регіонами","Customers by region"],
+ d:["Для кожного регіону поверніть region і кількість клієнтів. Відсортуйте за кількістю за спаданням, потім за назвою регіону.","For each region return region and customer count. Sort by count descending, then region."],
+ h:["GROUP BY region, ORDER BY два поля.","GROUP BY region, two ORDER BY keys."],
+ s:"SELECT region, COUNT(*) AS n FROM customers GROUP BY region ORDER BY n DESC, region;"},
+{lv:"Easy",ord:false,
+ t:["Середній ліміт за продуктом","Average limit by product"],
+ d:["Середній кредитний ліміт для кожного product, округлений до цілого (ROUND(…, 0)).","Average credit_limit per product, rounded to an integer (ROUND(…, 0))."],
+ h:["AVG(credit_limit) і GROUP BY product.","AVG(credit_limit) and GROUP BY product."],
+ s:"SELECT product, ROUND(AVG(credit_limit),0) FROM cards GROUP BY product;"},
+{lv:"Easy",ord:true,
+ t:["Топ-5 транзакцій","Top 5 transactions"],
+ d:["П'ять найбільших схвалених (status='approved') транзакцій: txn_id, amount. Від більшої до меншої.","Five largest approved transactions: txn_id, amount. Largest first."],
+ h:["WHERE status='approved' ORDER BY amount DESC LIMIT 5.","WHERE status='approved' ORDER BY amount DESC LIMIT 5."],
+ s:"SELECT txn_id, amount FROM transactions WHERE status='approved' ORDER BY amount DESC, txn_id LIMIT 5;"},
+{lv:"Easy",ord:false,
+ t:["Відсоток відмов за каналом","Decline rate by channel"],
+ d:["Для кожного channel поверніть частку відхилених транзакцій у відсотках, ROUND(…,2).","For each channel return the share of declined transactions in percent, ROUND(…,2)."],
+ h:["AVG(status='declined')*100 — зручний прийом у SQLite.","AVG(status='declined')*100 is a handy SQLite trick."],
+ s:"SELECT channel, ROUND(100.0*SUM(status='declined')/COUNT(*),2) FROM transactions GROUP BY channel;"},
+{lv:"Medium",ord:false,
+ t:["Витрати за продуктом","Spend by product"],
+ d:["Сума схвалених транзакцій для кожного product (JOIN transactions і cards), ROUND(…,2).","Sum of approved transaction amounts per product (JOIN transactions and cards), ROUND(…,2)."],
+ h:["JOIN за card_id, фільтр status='approved'.","JOIN on card_id, filter status='approved'."],
+ s:"SELECT c.product, ROUND(SUM(t.amount),2) FROM transactions t JOIN cards c ON c.card_id=t.card_id WHERE t.status='approved' GROUP BY c.product;"},
+{lv:"Medium",ord:false,
+ t:["Клієнти з кількома картками","Multi-card customers"],
+ d:["Скільки клієнтів мають більше однієї картки? Одне число.","How many customers hold more than one card? Single number."],
+ h:["Підзапит із GROUP BY customer_id HAVING COUNT(*)>1.","Subquery with GROUP BY customer_id HAVING COUNT(*)>1."],
+ s:"SELECT COUNT(*) FROM (SELECT customer_id FROM cards GROUP BY customer_id HAVING COUNT(*)>1);"},
+{lv:"Medium",ord:true,
+ t:["Витрати за місяцями","Monthly spend"],
+ d:["Для кожного місяця (YYYY-MM з txn_date) сума схвалених транзакцій, ROUND(…,2). Сортуйте за місяцем.","For each month (YYYY-MM from txn_date) the sum of approved transactions, ROUND(…,2). Sort by month."],
+ h:["substr(txn_date,1,7) або strftime('%Y-%m', txn_date).","substr(txn_date,1,7) or strftime('%Y-%m', txn_date)."],
+ s:"SELECT substr(txn_date,1,7) AS m, ROUND(SUM(amount),2) FROM transactions WHERE status='approved' GROUP BY m ORDER BY m;"},
+{lv:"Medium",ord:false,
+ t:["Частка прострочених карток","Delinquent share"],
+ d:["Частка карток із dpd > 0 серед усіх карток у знімку за 2026-09-01, у відсотках, ROUND(…,2).","Share of cards with dpd > 0 among all cards in the 2026-09-01 snapshot, in percent, ROUND(…,2)."],
+ h:["Фільтр month='2026-09-01', SUM(dpd>0)/COUNT(*).","Filter month='2026-09-01', SUM(dpd>0)/COUNT(*)."],
+ s:"SELECT ROUND(100.0*SUM(dpd>0)/COUNT(*),2) FROM monthly_snapshots WHERE month='2026-09-01';"},
+{lv:"Medium",ord:false,
+ t:["Висока утилізація","High utilization"],
+ d:["Скільки активних карток (cards.status='active') у знімку 2026-09-01 мають утилізацію balance/credit_limit > 0.9?","How many active cards in the 2026-09-01 snapshot have utilization balance/credit_limit > 0.9?"],
+ h:["JOIN snapshots і cards; ділення на ліміт.","JOIN snapshots and cards; divide by credit limit."],
+ s:"SELECT COUNT(*) FROM monthly_snapshots s JOIN cards c ON c.card_id=s.card_id WHERE s.month='2026-09-01' AND c.status='active' AND s.balance*1.0/c.credit_limit>0.9;"},
+{lv:"Medium",ord:false,
+ t:["Активні картки без транзакцій","Active cards with no transactions"],
+ d:["Скільки активних карток не мають жодної транзакції?","How many active cards have no transactions at all?"],
+ h:["LEFT JOIN … WHERE t.txn_id IS NULL або NOT EXISTS.","LEFT JOIN … WHERE t.txn_id IS NULL or NOT EXISTS."],
+ s:"SELECT COUNT(*) FROM cards c WHERE c.status='active' AND NOT EXISTS(SELECT 1 FROM transactions t WHERE t.card_id=c.card_id);"},
+{lv:"Medium",ord:false,
+ t:["Револьвери за станом на вересень","Revolvers in September"],
+ d:["Револьвер — картка з balance>0 та paid_amount < balance. Скільки револьверів серед карток із dpd=0 у знімку 2026-09-01?","A revolver is a card with balance>0 and paid_amount < balance. How many revolvers among cards with dpd=0 in the 2026-09-01 snapshot?"],
+ h:["Три умови в WHERE: month, dpd=0, balance>0 AND paid_amount<balance.","Three WHERE conditions: month, dpd=0, balance>0 AND paid_amount<balance."],
+ s:"SELECT COUNT(*) FROM monthly_snapshots WHERE month='2026-09-01' AND dpd=0 AND balance>0 AND paid_amount<balance;"},
+{lv:"Hard",ord:true,
+ t:["Топ-3 MCC за продуктом","Top-3 MCC per product"],
+ d:["Для кожного product — три категорії merchant_category із найбільшою сумою схвалених витрат: product, merchant_category, spend (ROUND 2), rank. Сортуйте за product, rank.","For each product — the three merchant_category values with the highest approved spend: product, merchant_category, spend (ROUND 2), rank. Sort by product, rank."],
+ h:["CTE з SUM, потім ROW_NUMBER() OVER (PARTITION BY product ORDER BY spend DESC).","CTE with SUM, then ROW_NUMBER() OVER (PARTITION BY product ORDER BY spend DESC)."],
+ s:"WITH s AS (SELECT c.product, t.merchant_category, ROUND(SUM(t.amount),2) AS spend FROM transactions t JOIN cards c ON c.card_id=t.card_id WHERE t.status='approved' GROUP BY 1,2), r AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY product ORDER BY spend DESC) AS rk FROM s) SELECT product, merchant_category, spend, rk FROM r WHERE rk<=3 ORDER BY product, rk;"},
+{lv:"Hard",ord:false,
+ t:["Roll rate 1–30 → 31–60","Roll rate 1–30 → 31–60"],
+ d:["Серед карток у кошику dpd 1–30 станом на 2026-05-01 яка частка перейшла в кошик 31–60 станом на 2026-06-01? Відсоток, ROUND(…,2).","Among cards in the dpd 1–30 bucket on 2026-05-01, what share moved to the 31–60 bucket on 2026-06-01? Percent, ROUND(…,2)."],
+ h:["Самоз'єднання monthly_snapshots за card_id та двома місяцями.","Self-join monthly_snapshots on card_id for the two months."],
+ s:"SELECT ROUND(100.0*SUM(b.dpd BETWEEN 31 AND 60)/COUNT(*),2) FROM monthly_snapshots a JOIN monthly_snapshots b ON a.card_id=b.card_id AND a.month='2026-05-01' AND b.month='2026-06-01' WHERE a.dpd BETWEEN 1 AND 30;"},
+{lv:"Hard",ord:true,
+ t:["Накопичені витрати за сегментом","Cumulative spend by segment"],
+ d:["Для кожного segment і місяця: segment, month (YYYY-MM), spend (схвалені, ROUND 2), cum_spend — накопичувальна сума за сегментом (ROUND 2). Сортуйте за segment, month.","For each segment and month: segment, month (YYYY-MM), spend (approved, ROUND 2), cum_spend — running total per segment (ROUND 2). Sort by segment, month."],
+ h:["Агрегуйте в CTE, потім SUM(spend) OVER (PARTITION BY segment ORDER BY month).","Aggregate in a CTE, then SUM(spend) OVER (PARTITION BY segment ORDER BY month)."],
+ s:"WITH m AS (SELECT cu.segment, substr(t.txn_date,1,7) AS month, SUM(t.amount) AS spend FROM transactions t JOIN cards c ON c.card_id=t.card_id JOIN customers cu ON cu.customer_id=c.customer_id WHERE t.status='approved' GROUP BY 1,2) SELECT segment, month, ROUND(spend,2), ROUND(SUM(spend) OVER (PARTITION BY segment ORDER BY month),2) FROM m ORDER BY segment, month;"},
+{lv:"Hard",ord:true,
+ t:["Зміна витрат м/м (LAG)","Month-over-month change (LAG)"],
+ d:["Сума схвалених витрат за місяць, попередній місяць та зміна у % (ROUND 2). Для першого місяця — NULL. Колонки: month, spend, prev_spend, mom_pct. Сортуйте за month.","Monthly approved spend, previous month and the % change (ROUND 2). First month is NULL. Columns: month, spend, prev_spend, mom_pct. Sort by month."],
+ h:["LAG(spend) OVER (ORDER BY month).","LAG(spend) OVER (ORDER BY month)."],
+ s:"WITH m AS (SELECT substr(txn_date,1,7) AS month, SUM(amount) AS spend FROM transactions WHERE status='approved' GROUP BY 1) SELECT month, ROUND(spend,2), ROUND(LAG(spend) OVER (ORDER BY month),2), ROUND(100.0*(spend-LAG(spend) OVER (ORDER BY month))/LAG(spend) OVER (ORDER BY month),2) FROM m ORDER BY month;"},
+{lv:"Hard",ord:false,
+ t:["Три місяці поспіль із простроченням","3 consecutive months delinquent"],
+ d:["Скільки різних карток мали dpd>0 принаймні три місяці підряд?","How many distinct cards had dpd>0 in at least three consecutive months?"],
+ h:["Віконна сума (dpd>0) по ROWS BETWEEN 2 PRECEDING AND CURRENT ROW = 3.","Window sum of (dpd>0) over ROWS BETWEEN 2 PRECEDING AND CURRENT ROW = 3."],
+ s:"WITH w AS (SELECT card_id, SUM(dpd>0) OVER (PARTITION BY card_id ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS s, COUNT(*) OVER (PARTITION BY card_id ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS n FROM monthly_snapshots) SELECT COUNT(DISTINCT card_id) FROM w WHERE s=3 AND n=3;"},
+{lv:"Hard",ord:true,
+ t:["Вінтажі: прострочка за роком відкриття","Vintage delinquency by open year"],
+ d:["Для кожного року відкриття картки (substr(open_date,1,4)) — частка карток із dpd>30 у знімку 2026-09-01 серед карток цього вінтажу, що мають знімок за цей місяць. Колонки: vintage, cards, dpd30_pct (ROUND 2). Сортуйте за vintage.","For each card open year (substr(open_date,1,4)) — the share of cards with dpd>30 in the 2026-09-01 snapshot among cards of that vintage that have a snapshot that month. Columns: vintage, cards, dpd30_pct (ROUND 2). Sort by vintage."],
+ h:["JOIN snapshots і cards, фільтр за місяцем, GROUP BY vintage.","JOIN snapshots and cards, filter the month, GROUP BY vintage."],
+ s:"SELECT substr(c.open_date,1,4) AS vintage, COUNT(*), ROUND(100.0*SUM(s.dpd>30)/COUNT(*),2) FROM monthly_snapshots s JOIN cards c ON c.card_id=s.card_id WHERE s.month='2026-09-01' GROUP BY vintage ORDER BY vintage;"}
+];
+
+/* ---------- App ---------- */
+let db=null,cur=0,progress={};
+const $=id=>document.getElementById(id);
+function load(){try{progress=JSON.parse(localStorage.getItem("sqltrainer.cc")||"{}")}catch(e){progress={}}}
+function save(){try{localStorage.setItem("sqltrainer.cc",JSON.stringify(progress))}catch(e){}}
+function norm(rows){return rows.map(r=>r.map(v=>v===null?"NULL":typeof v==="number"?String(Math.round(v*100)/100):String(v)))}
+function exec(q){const r=db.exec(q);return r.length?r[r.length-1]:{columns:[],values:[]}}
+function showMsg(c,t){const m=$("msg");m.className=c;m.textContent=t}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function render(res){
+ if(!res.columns.length){$("out").innerHTML="";return}
+ const rows=res.values.slice(0,200);
+ $("out").innerHTML=`<div class="res"><table><thead><tr>${res.columns.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(v=>`<td>${v===null?"<i class=mut>NULL</i>":esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><p class="mut">${res.values.length} ${T("rowsn")}</p>`;
+}
+function list(){
+ const L=lang==="uk"?0:1;
+ $("list").innerHTML=TASKS.map((t,i)=>`<button class="t ${i===cur?"cur":""}" data-i="${i}"><span class="n">${i+1}</span><span class="${progress[i]?"done":""}">${esc(t.t[L])}</span><span class="lvl">${t.lv}</span></button>`).join("");
+ $("list").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;task()});
+ const n=Object.keys(progress).length;$("score").textContent=`${n}/${TASKS.length} ${T("tasks")}`;
+}
+function task(){
+ const L=lang==="uk"?0:1,t=TASKS[cur];
+ $("head").innerHTML=`<h2 style="margin:0 0 4px">${cur+1}. ${esc(t.t[L])} <span class="pill">${t.lv}</span></h2>`;
+ $("desc").textContent=t.d[L];
+ $("sql").value="";$("out").innerHTML="";showMsg("","");$("msg").style.display="none";
+ list();
+}
+function ui(){
+ for(const [id,k] of [["run","run"],["check","check"],["hint","hint"],["sol","sol"],["reset","reset"],["sch","sch"]])$(id).textContent=T(k);
+ $("lang").textContent=lang==="uk"?"EN":"UA";
+ document.documentElement.lang=lang;
+ task();
+}
+function runUser(){
+ const q=$("sql").value.trim();if(!q){showMsg("info",T("empty"));return null}
+ try{const r=exec(q);render(r);$("msg").style.display="none";return r}catch(e){showMsg("bad",T("err")+e.message);return null}
+}
+function check(){
+ const r=runUser();if(!r)return;
+ const ref=exec(TASKS[cur].s);
+ if(r.columns.length!==ref.columns.length){showMsg("bad",T("cols")+ref.columns.length);return}
+ if(r.values.length!==ref.values.length){showMsg("bad",T("rows")+ref.values.length);return}
+ let a=norm(r.values).map(x=>x.join("|")),b=norm(ref.values).map(x=>x.join("|"));
+ if(!TASKS[cur].ord){a.sort();b.sort()}
+ const ok=a.every((v,i)=>v===b[i]);
+ if(ok){progress[cur]=1;save();showMsg("ok",T("ok"));list()}else showMsg("bad",T("bad"));
+}
+function schema(){
+ const r=exec("SELECT name, sql FROM sqlite_master WHERE type='table'");
+ $("schema").textContent=r.values.map(v=>v[1].replace(/\(/,"(\n  ").replace(/, /g,",\n  ")).join("\n\n");
+}
+$("run").onclick=runUser;$("check").onclick=check;
+$("hint").onclick=()=>showMsg("info",TASKS[cur].h[lang==="uk"?0:1]);
+$("sol").onclick=()=>{if(!confirm(T("conf")))return;$("sql").value=TASKS[cur].s;showMsg("info",T("solfor"))};
+$("reset").onclick=()=>{progress={};save();list()};
+$("lang").onclick=()=>{lang=lang==="uk"?"en":"uk";ui()};
+$("sql").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();runUser()}});
+load();ui();showMsg("info",T("loading"));
+initSqlJs({locateFile:f=>"https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/"+f}).then(SQL=>{
+ db=buildDB(SQL);schema();showMsg("info",T("ready"));window.__ready=true;
+}).catch(e=>showMsg("bad",String(e)));
+window.__T=TASKS;window.__run=q=>exec(q);
+</script>
+</body>
+</html>

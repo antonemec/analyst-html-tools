@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калькулятор метрик кредитного портфеля | Credit Portfolio Metrics Calculator</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb;--ok:#14803c;--bad:#b42318}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff;--ok:#4cc27a;--bad:#ff8a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+.wrap{max-width:1000px;margin:0 auto}
+h1{margin:0;font-size:20px} h2{font-size:17px;margin:0 0 8px}
+p.s{margin:4px 0 0;color:var(--mut)}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button,a.pill{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:99px;text-decoration:none}
+button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--mut)}
+input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:20px}
+.kpi span{color:var(--mut);font-size:13px}
+.good{color:var(--ok)}.badc{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+.note{color:var(--mut);font-size:13px;margin-top:10px}
+.sec{display:none}.sec.on{display:block}
+code{background:var(--bg);padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1 id="h1"></h1><p class="s" id="sub"></p>
+<nav id="nav"></nav>
+</div></header>
+<main>
+<section class="sec panel" id="s0">
+<h2 id="t0"></h2>
+<div class="grid" id="in0"></div><div class="out" id="out0"></div><p class="note" id="n0"></p>
+</section>
+<section class="sec panel" id="s1">
+<h2 id="t1"></h2>
+<div class="grid" id="in1"></div><div class="out" id="out1"></div><p class="note" id="n1"></p>
+</section>
+<section class="sec panel" id="s2">
+<h2 id="t2"></h2>
+<div class="grid" id="in2"></div><div class="out" id="out2"></div><p class="note" id="n2"></p>
+</section>
+<section class="sec panel" id="s3">
+<h2 id="t3"></h2>
+<div class="grid" id="in3"></div><div class="out" id="out3"></div><p class="note" id="n3"></p>
+</section>
+<p><a class="pill" href="index.html">← index</a></p>
+</main>
+<script>
+"use strict";
+let L="uk";
+const TXT={
+h1:{uk:"Калькулятор метрик кредитного портфеля",en:"Credit portfolio metrics calculator"},
+sub:{uk:"Інтерактивні формули для аналітика ризиків і карткових продуктів. Усі розрахунки локально у браузері.",en:"Interactive formulas for risk and card-product analysts. Everything runs locally in your browser."},
+tabs:{uk:["Вартість кредиту","Roll rate і NPL","Очікувані збитки (ECL)","Економіка картки"],en:["Cost of credit","Roll rate & NPL","Expected loss (ECL)","Card unit economics"]}
+};
+const MODS=[
+{ // 0 cost of credit
+ title:{uk:"Вартість кредиту та пільговий період",en:"Cost of credit and grace period"},
+ f:[["apr","Річна ставка, % (APR)","APR, %",48],["bal","Сума боргу, грн","Debt amount, UAH",20000],["days","Днів користування після пільгового періоду","Days after the grace period",30],["grace","Пільговий період, днів","Grace period, days",55],["pay","Скільки днів до погашення від покупки","Days from purchase to repayment",40]],
+ calc(v){
+  const r=v.apr/100,daily=r/365,ear=Math.pow(1+r/12,12)-1;
+  const interestAfter=v.bal*daily*v.days;
+  const inGrace=v.pay<=v.grace;
+  return [
+   {k:"Ефективна річна ставка (EAR)",ke:"Effective annual rate (EAR)",v:(ear*100).toFixed(2)+" %"},
+   {k:"Денна ставка",ke:"Daily rate",v:(daily*100).toFixed(4)+" %"},
+   {k:"Відсотки за період",ke:"Interest for the period",v:fmt(interestAfter)+" ₴"},
+   {k:"Покупка в пільговому періоді?",ke:"Purchase within grace period?",v:inGrace?(L==="uk"?"Так — 0 ₴ відсотків":"Yes — 0 UAH interest"):(L==="uk"?"Ні — нараховуються відсотки":"No — interest applies"),cls:inGrace?"good":"badc"}
+  ];
+ },
+ note:{uk:"EAR = (1 + APR/12)^12 − 1. Відсотки = борг × APR / 365 × дні. Це спрощена модель без комісій і мінімальних платежів.",en:"EAR = (1 + APR/12)^12 − 1. Interest = debt × APR / 365 × days. Simplified model without fees or minimum payments."}
+},
+{ // 1 roll rate
+ title:{uk:"Roll rate і NPL за кошиками прострочки",en:"Roll rate and NPL by delinquency bucket"},
+ f:[["c0","Поточні (0), початок міс., к-сть","Current (0) at start, count",10000],["c1","1–30 днів, початок","1–30 dpd at start",600],["c2","31–60 днів, початок","31–60 dpd at start",250],["c3","61–90 днів, початок","61–90 dpd at start",140],["r01","З поточних у 1–30 за місяць","Current → 1–30 during month",320],["r12","З 1–30 у 31–60","1–30 → 31–60",230],["r23","З 31–60 у 61–90","31–60 → 61–90",160],["r3n","З 61–90 у 90+","61–90 → 90+",110],["npl","Баланс 90+, млн грн","90+ balance, UAH m",18],["gross","Валовий портфель, млн грн","Gross portfolio, UAH m",420]],
+ calc(v){
+  const p=(a,b)=>b?(100*a/b).toFixed(2)+" %":"—";
+  return [
+   {k:"Roll 0 → 1–30",ke:"Roll 0 → 1–30",v:p(v.r01,v.c0)},
+   {k:"Roll 1–30 → 31–60",ke:"Roll 1–30 → 31–60",v:p(v.r12,v.c1)},
+   {k:"Roll 31–60 → 61–90",ke:"Roll 31–60 → 61–90",v:p(v.r23,v.c2)},
+   {k:"Roll 61–90 → 90+",ke:"Roll 61–90 → 90+",v:p(v.r3n,v.c3)},
+   {k:"Ланцюжок 1–30 → 90+ (добуток)",ke:"Chain 1–30 → 90+ (product)",v:(v.c1&&v.c2&&v.c3?(100*(v.r12/v.c1)*(v.r23/v.c2)*(v.r3n/v.c3)).toFixed(2)+" %":"—")},
+   {k:"NPL-коефіцієнт",ke:"NPL ratio",v:p(v.npl,v.gross),cls:(v.gross&&v.npl/v.gross>0.1)?"badc":"good"}
+  ];
+ },
+ note:{uk:"Roll rate = частка рахунків кошика, що перейшла у гірший кошик за період. NPL = баланс 90+ / валовий портфель.",en:"Roll rate = share of accounts in a bucket that moved to a worse bucket over the period. NPL = 90+ balance / gross portfolio."}
+},
+{ // 2 ECL
+ title:{uk:"Очікувані кредитні збитки: ECL = PD × LGD × EAD",en:"Expected credit loss: ECL = PD × LGD × EAD"},
+ f:[["pd","PD (ймовірність дефолту), %","PD (probability of default), %",6],["lgd","LGD (втрати при дефолті), %","LGD (loss given default), %",82],["limit","Ліміт картки, грн","Card limit, UAH",50000],["drawn","Використано (баланс), грн","Drawn balance, UAH",30000],["ccf","CCF (конверсія невикористаного), %","CCF (undrawn conversion), %",60],["n","Кількість карток","Number of cards",10000]],
+ calc(v){
+  const ead=v.drawn+(v.limit-v.drawn)*v.ccf/100;
+  const ecl=v.pd/100*v.lgd/100*ead;
+  return [
+   {k:"EAD на картку",ke:"EAD per card",v:fmt(ead)+" ₴"},
+   {k:"ECL на картку",ke:"ECL per card",v:fmt(ecl)+" ₴"},
+   {k:"ECL по портфелю",ke:"Portfolio ECL",v:fmt(ecl*v.n/1e6,2)+" млн ₴"},
+   {k:"ECL до використаного балансу",ke:"ECL / drawn balance",v:v.drawn?(100*ecl/v.drawn).toFixed(2)+" %":"—"}
+  ];
+ },
+ note:{uk:"EAD = баланс + (ліміт − баланс) × CCF. Для МСФЗ 9 стадії 1/2/3 відрізняються горизонтом PD (12 міс. проти всього життя).",en:"EAD = drawn + (limit − drawn) × CCF. Under IFRS 9, stages 1/2/3 differ by PD horizon (12-month vs lifetime)."}
+},
+{ // 3 unit economics
+ title:{uk:"Економіка картки на рік (unit economics)",en:"Annual card unit economics"},
+ f:[["spend","Витрати за карткою на рік, грн","Annual card spend, UAH",180000],["ic","Інтерчейндж, %","Interchange, %",1.2],["rev","Середній револьверний баланс, грн","Average revolving balance, UAH",8000],["apr","Ставка за кредитом, % річних","Interest rate, % p.a.",48],["fees","Комісії та інше, грн/рік","Fees and other, UAH/year",350],["ftp","Вартість фондування (FTP), % річних","Funding cost (FTP), % p.a.",16],["cor","Cost of Risk, % від балансу","Cost of risk, % of balance",9],["opex","Операційні витрати, грн/рік","Opex, UAH/year",450],["rew","Кешбек/бонуси, % від витрат","Cashback/rewards, % of spend",0.5]],
+ calc(v){
+  const interchange=v.spend*v.ic/100,interest=v.rev*v.apr/100,fund=v.rev*v.ftp/100,loss=v.rev*v.cor/100,rew=v.spend*v.rew/100;
+  const rev=interchange+interest+v.fees,cost=fund+loss+v.opex+rew,net=rev-cost;
+  return [
+   {k:"Дохід від інтерчейнджу",ke:"Interchange income",v:fmt(interchange)+" ₴"},
+   {k:"Процентний дохід",ke:"Interest income",v:fmt(interest)+" ₴"},
+   {k:"Загальний дохід",ke:"Total revenue",v:fmt(rev)+" ₴"},
+   {k:"Загальні витрати",ke:"Total costs",v:fmt(cost)+" ₴"},
+   {k:"Чистий результат на картку",ke:"Net result per card",v:fmt(net)+" ₴",cls:net>=0?"good":"badc"},
+   {k:"Break-even витрати",ke:"Break-even annual spend",v:(function(){const c=(v.ic-v.rew)/100;return c>0?fmt(Math.max(0,(fund+loss+v.opex-interest-v.fees)/c))+" ₴":"—"})()}
+  ];
+ },
+ note:{uk:"Break-even витрати: річні витрати, при яких інтерчейндж за вирахуванням кешбеку покриває фондування, збитки й opex за вирахуванням процентного та комісійного доходу.",en:"Break-even spend: annual spend at which interchange net of cashback covers funding, losses and opex net of interest and fee income."}
+}
+];
+function fmt(x,d){return Number(x).toLocaleString("uk-UA",{maximumFractionDigits:d===undefined?0:d,minimumFractionDigits:d||0})}
+const vals=MODS.map(m=>Object.fromEntries(m.f.map(f=>[f[0],f[3]])));
+let cur=0;
+function build(){
+ document.documentElement.lang=L;
+ document.getElementById("h1").textContent=TXT.h1[L];
+ document.getElementById("sub").textContent=TXT.sub[L];
+ const nav=document.getElementById("nav");
+ nav.innerHTML=TXT.tabs[L].map((t,i)=>`<button data-i="${i}" class="${i===cur?"on":""}">${t}</button>`).join("")+`<button id="lg">${L==="uk"?"EN":"UA"}</button>`;
+ nav.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;build()});
+ document.getElementById("lg").onclick=()=>{L=L==="uk"?"en":"uk";build()};
+ MODS.forEach((m,i)=>{
+  const s=document.getElementById("s"+i);s.classList.toggle("on",i===cur);
+  document.getElementById("t"+i).textContent=m.title[L];
+  document.getElementById("in"+i).innerHTML=m.f.map(f=>`<label>${L==="uk"?f[1]:f[2]}<input type="number" step="any" data-m="${i}" data-k="${f[0]}" value="${vals[i][f[0]]}"></label>`).join("");
+  document.getElementById("n"+i).textContent=m.note[L];
+ });
+ document.querySelectorAll("input[data-m]").forEach(inp=>inp.oninput=()=>{vals[+inp.dataset.m][inp.dataset.k]=parseFloat(inp.value)||0;calc(+inp.dataset.m)});
+ MODS.forEach((_,i)=>calc(i));
+}
+function calc(i){
+ const r=MODS[i].calc(vals[i]);
+ document.getElementById("out"+i).innerHTML=r.map(x=>`<div class="kpi"><span>${L==="uk"?x.k:x.ke}</span><b class="${x.cls||""}">${x.v}</b></div>`).join("");
+}
+build();
+</script>
+</body>
+</html>

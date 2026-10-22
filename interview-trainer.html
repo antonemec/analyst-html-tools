@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тренажер інтерв'ю аналітика | Data Analyst Interview Trainer</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb;--ok:#14803c;--bad:#b42318}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff;--ok:#4cc27a;--bad:#ff8a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+.wrap{max-width:820px;margin:0 auto}
+h1{margin:0;font-size:20px}
+p.s{margin:4px 0 0;color:var(--mut)}
+main{max-width:820px;margin:0 auto;padding:16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+select,button,a.pill{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:10px;cursor:pointer;text-decoration:none}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.ok{border-color:var(--ok);color:var(--ok)} button.no{border-color:var(--bad);color:var(--bad)}
+.tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:99px;padding:1px 9px;color:var(--mut);margin-right:6px}
+#q{font-size:19px;margin:10px 0}
+#a{display:none;border-top:1px dashed var(--line);margin-top:12px;padding-top:12px;white-space:pre-wrap}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;overflow:auto;white-space:pre-wrap}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.stats{color:var(--mut);font-size:14px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--acc)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1 id="h1"></h1><p class="s" id="sub"></p></div></header>
+<main>
+<div class="panel filters">
+<select id="fc"></select><select id="fl"></select><select id="fm"></select>
+<button id="lg">EN</button><a class="pill" href="index.html">← index</a>
+</div>
+<div class="panel">
+<div id="meta"></div>
+<div id="q"></div>
+<div id="a"></div>
+<div class="row"><button class="pri" id="show"></button><button class="ok" id="know"></button><button class="no" id="dunno"></button><button id="skip"></button></div>
+</div>
+<div class="panel stats"><div id="st"></div><div class="bar"><i id="pb" style="width:0"></i></div></div>
+</main>
+<script>
+"use strict";
+let L="uk";
+const UI={
+h1:{uk:"Тренажер інтерв'ю аналітика даних",en:"Data analyst interview trainer"},
+sub:{uk:"Питання з відповідями за темами й рівнями. Оцініть себе чесно — слабкі питання повертаються частіше.",en:"Questions with model answers by topic and level. Rate yourself honestly — weak questions come back more often."},
+show:{uk:"Показати відповідь",en:"Show answer"},know:{uk:"Знаю",en:"I knew it"},dunno:{uk:"Не знаю",en:"Didn't know"},skip:{uk:"Далі",en:"Next"},
+all:{uk:"Усі теми",en:"All topics"},alll:{uk:"Усі рівні",en:"All levels"},
+modes:{uk:["Усі питання","Лише слабкі","Нові"],en:["All questions","Weak only","New"]},
+cats:{SQL:["SQL","SQL"],PY:["Python","Python"],MET:["Метрики й продукт","Metrics & product"],STAT:["Статистика","Statistics"],BANK:["Банківська домен","Banking domain"],LOG:["Логіка","Logic"]},
+lv:{1:["Junior","Junior"],2:["Middle","Middle"],3:["Senior","Senior"]},
+done:{uk:"Пройдено",en:"Seen"},known:{uk:"Знаю",en:"Known"},weak:{uk:"Слабкі",en:"Weak"},empty:{uk:"Немає питань за цими фільтрами.",en:"No questions for these filters."}
+};
+/* c=category, l=level, q/a = [uk,en] */
+const Q=[
+{c:"SQL",l:1,q:["Чим відрізняється WHERE від HAVING?","What is the difference between WHERE and HAVING?"],a:["WHERE фільтрує рядки до групування, HAVING — групи після агрегації. Умову на SUM/COUNT можна писати лише в HAVING.\nПриклад: SELECT region, COUNT(*) FROM customers WHERE age>25 GROUP BY region HAVING COUNT(*)>10;","WHERE filters rows before grouping; HAVING filters groups after aggregation. Conditions on SUM/COUNT go in HAVING.\nExample: SELECT region, COUNT(*) FROM customers WHERE age>25 GROUP BY region HAVING COUNT(*)>10;"]},
+{c:"SQL",l:1,q:["INNER, LEFT, RIGHT, FULL JOIN — коли що?","INNER, LEFT, RIGHT, FULL JOIN — when to use which?"],a:["INNER — лише збіги. LEFT — усі рядки лівої таблиці + збіги (NULL, якщо немає). FULL — усе з обох. Типова задача: «клієнти без транзакцій» = LEFT JOIN + WHERE right.id IS NULL.","INNER keeps matches only. LEFT keeps all left rows plus matches (NULL if none). FULL keeps everything. Classic: customers without transactions = LEFT JOIN + WHERE right.id IS NULL."]},
+{c:"SQL",l:1,q:["Різниця між COUNT(*), COUNT(col) і COUNT(DISTINCT col)?","COUNT(*) vs COUNT(col) vs COUNT(DISTINCT col)?"],a:["COUNT(*) — усі рядки, COUNT(col) — рядки, де col не NULL, COUNT(DISTINCT col) — унікальні не-NULL значення.","COUNT(*) counts all rows, COUNT(col) counts non-NULL values, COUNT(DISTINCT col) counts unique non-NULL values."]},
+{c:"SQL",l:2,q:["Що таке віконні функції? Чим ROW_NUMBER відрізняється від RANK і DENSE_RANK?","What are window functions? ROW_NUMBER vs RANK vs DENSE_RANK?"],a:["Віконна функція рахує по «вікну» рядків без згортання результату. ROW_NUMBER — унікальні номери; RANK — однакові значення мають однаковий ранг із пропусками (1,1,3); DENSE_RANK — без пропусків (1,1,2).","A window function computes over a set of rows without collapsing them. ROW_NUMBER gives unique numbers; RANK gives ties the same rank with gaps (1,1,3); DENSE_RANK has no gaps (1,1,2)."]},
+{c:"SQL",l:2,q:["Як знайти топ-N в кожній групі?","How do you get the top N per group?"],a:["ROW_NUMBER() OVER (PARTITION BY group ORDER BY metric DESC) у CTE/підзапиті, далі WHERE rn<=N.","Use ROW_NUMBER() OVER (PARTITION BY group ORDER BY metric DESC) in a CTE/subquery, then WHERE rn<=N."]},
+{c:"SQL",l:2,q:["Як порахувати накопичувальну суму та зміну до попереднього періоду?","How do you compute a running total and change vs the previous period?"],a:["SUM(x) OVER (PARTITION BY k ORDER BY d) — накопичувальна сума; LAG(x) OVER (ORDER BY d) — попереднє значення; зміна = (x − LAG(x)) / LAG(x).","SUM(x) OVER (PARTITION BY k ORDER BY d) is the running total; LAG(x) OVER (ORDER BY d) is the previous value; change = (x − LAG(x)) / LAG(x)."]},
+{c:"SQL",l:2,q:["Порядок виконання SQL-запиту?","Logical order of SQL query execution?"],a:["FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT (віконні функції) → DISTINCT → ORDER BY → LIMIT. Тому аліас із SELECT недоступний у WHERE.","FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT (window functions) → DISTINCT → ORDER BY → LIMIT. That is why a SELECT alias is not visible in WHERE."]},
+{c:"SQL",l:3,q:["Як би ви знайшли дублікати та видалили їх, залишивши останній запис?","How would you find duplicates and remove them, keeping the latest row?"],a:["ROW_NUMBER() OVER (PARTITION BY business_key ORDER BY updated_at DESC) = 1 — залишаємо; решта — дублікати. Перед видаленням перевірте SELECT-ом і зробіть бекап.","ROW_NUMBER() OVER (PARTITION BY business_key ORDER BY updated_at DESC) = 1 is kept; the rest are duplicates. Verify with SELECT and back up before deleting."]},
+{c:"SQL",l:3,q:["Як оптимізувати повільний запит?","How do you optimize a slow query?"],a:["1) EXPLAIN/план виконання; 2) індекси на ключі JOIN/фільтрів; 3) фільтр якомога раніше, менше стовпців (без SELECT *); 4) уникати функцій над індексованими колонками у WHERE; 5) партиціонування за датою; 6) попередні агрегати/матеріалізовані вітрини.","1) Read the EXPLAIN plan; 2) index join/filter keys; 3) filter early, select fewer columns; 4) avoid functions on indexed columns in WHERE; 5) partition by date; 6) pre-aggregate/materialized marts."]},
+{c:"PY",l:1,q:["Список, кортеж, множина, словник — відмінності?","List, tuple, set, dict — differences?"],a:["list — змінюваний упорядкований; tuple — незмінний; set — унікальні елементи без порядку; dict — пари ключ-значення (ключі хешовані).","list is mutable and ordered; tuple is immutable; set holds unique unordered items; dict maps hashable keys to values."]},
+{c:"PY",l:2,q:["Як у pandas об'єднати таблиці та згрупувати дані?","How do you merge and group in pandas?"],a:["df.merge(df2, on='id', how='left'); df.groupby('k').agg(total=('x','sum'), n=('id','count')). Перевіряйте кількість рядків до й після merge, щоб не розмножити дані.","df.merge(df2, on='id', how='left'); df.groupby('k').agg(total=('x','sum'), n=('id','count')). Check row counts before/after merge to avoid duplicating rows."]},
+{c:"PY",l:2,q:["Як обробити пропуски (NaN)?","How do you handle missing values (NaN)?"],a:["Спершу зрозумійте причину (MCAR/MAR/MNAR). Варіанти: видалити, заповнити медіаною/модою, forward fill для часових рядів, окрема категорія «unknown», прапорець пропуску. Завжди документуйте припущення.","First understand why they are missing (MCAR/MAR/MNAR). Options: drop, fill with median/mode, forward fill for time series, an 'unknown' category, a missing-flag feature. Always document the assumption."]},
+{c:"PY",l:3,q:["Чому цикл по рядках DataFrame повільний і чим його замінити?","Why is looping over DataFrame rows slow and what to use instead?"],a:["Цикл виконується в інтерпретаторі Python. Заміна — векторизовані операції, np.where, .map/.merge, groupby+transform. Це в десятки разів швидше.","The loop runs in the Python interpreter. Use vectorized operations, np.where, .map/.merge, groupby+transform — often tens of times faster."]},
+{c:"MET",l:1,q:["Що таке конверсія, retention, churn?","What are conversion, retention and churn?"],a:["Конверсія = дійшли до цілі / всі в початку воронки. Retention = частка користувачів, що повернулись через N днів. Churn = 1 − retention за період.","Conversion = reached goal / entered funnel. Retention = share of users returning after N days. Churn = 1 − retention for the period."]},
+{c:"MET",l:2,q:["Метрика впала на 10% — ваші перші кроки?","A metric dropped 10% — what are your first steps?"],a:["1) Перевірити дані (збій збору, затримки, дублікати). 2) Сезонність/свята. 3) Декомпозиція: за каналом, регіоном, продуктом, пристроєм, когортою. 4) Зміни продукту/цін/маркетингу в цей період. 5) Гіпотези та підтвердження. 6) Рекомендація й план моніторингу.","1) Validate data (tracking outage, delays, duplicates). 2) Seasonality/holidays. 3) Decompose by channel, region, product, device, cohort. 4) Product/pricing/marketing changes. 5) Hypotheses and evidence. 6) Recommendation and monitoring plan."]},
+{c:"MET",l:2,q:["Як вибрати north star і набір метрик для продукту?","How do you choose a north-star metric and supporting metrics?"],a:["North star відображає цінність для користувача й корелює з доходом. Підтримують його: input-метрики (що ми можемо змінити) та guardrail-метрики (що не можна погіршити).","The north star captures user value and correlates with revenue. Support it with input metrics (what we can influence) and guardrail metrics (what must not degrade)."]},
+{c:"STAT",l:1,q:["Середнє, медіана, мода — коли що?","Mean, median, mode — when to use which?"],a:["Середнє чутливе до викидів. Медіана — для скошених розподілів (доходи, чеки). Мода — для категорій.","Mean is sensitive to outliers. Median suits skewed data (income, basket size). Mode suits categories."]},
+{c:"STAT",l:2,q:["Що таке p-value і довірчий інтервал?","What are the p-value and a confidence interval?"],a:["p-value — ймовірність побачити такий (або більший) ефект, якщо H0 вірна; це не ймовірність того, що H0 вірна. 95% ДІ — діапазон, що за повторів експерименту накриває справжнє значення у 95% випадків.","The p-value is the probability of seeing an effect this large or larger if H0 is true; it is not the probability H0 is true. A 95% CI covers the true value in 95% of repeated experiments."]},
+{c:"STAT",l:2,q:["Як спланувати A/B-тест?","How do you design an A/B test?"],a:["Гіпотеза → метрика (основна та guardrail) → MDE, α=0.05, потужність 80% → розмір вибірки та тривалість (повні тижні) → рандомізація → перевірка SRM → аналіз без «підглядання».","Hypothesis → primary and guardrail metrics → MDE, α=0.05, power 80% → sample size and duration (full weeks) → randomization → SRM check → analysis without peeking."]},
+{c:"STAT",l:3,q:["Що таке парадокс Сімпсона?","What is Simpson's paradox?"],a:["Тренд у кожній підгрупі протилежний тренду в агрегаті через різну вагу підгруп. Висновок: завжди перевіряйте дані в розрізі ключових сегментів.","A trend present in every subgroup reverses in the aggregate because of unequal subgroup weights. Always check key segments before concluding."]},
+{c:"BANK",l:1,q:["Що таке DPD і кошики прострочки?","What is DPD and delinquency buckets?"],a:["DPD (days past due) — кількість днів прострочки. Кошики: 0, 1–30, 31–60, 61–90, 90+ (NPL).","DPD (days past due) is the number of days overdue. Buckets: 0, 1–30, 31–60, 61–90, 90+ (NPL)."]},
+{c:"BANK",l:2,q:["Що таке roll rate і vintage-аналіз?","What are roll rate and vintage analysis?"],a:["Roll rate — частка рахунків, що перейшли з кошика в гірший за період. Vintage — відстеження когорти карток, відкритих в один період, за віком (місяць на балансі): показує якість скорингу різних когорт.","Roll rate is the share of accounts moving to a worse bucket over a period. Vintage tracks a cohort of cards opened in one period by age (months on book) and reveals underwriting quality by cohort."]},
+{c:"BANK",l:2,q:["Як розраховується Cost of Risk і чим він відрізняється від NPL?","How is Cost of Risk calculated and how does it differ from NPL?"],a:["CoR = річні відрахування в резерви / середній валовий портфель. NPL — частка проблемної заборгованості на дату (запас), CoR — вартість ризику за період (потік).","CoR = annual provisions / average gross portfolio. NPL is a stock (problem balance at a date); CoR is a flow (cost of risk over a period)."]},
+{c:"BANK",l:3,q:["Поясніть PD, LGD, EAD і ECL","Explain PD, LGD, EAD and ECL"],a:["PD — ймовірність дефолту, LGD — частка втрат при дефолті, EAD — експозиція на момент дефолту. ECL = PD × LGD × EAD. За МСФЗ 9: стадія 1 — 12-міс. ECL, стадії 2–3 — ECL за весь строк.","PD is probability of default, LGD is loss share given default, EAD is exposure at default. ECL = PD × LGD × EAD. Under IFRS 9: stage 1 uses 12-month ECL, stages 2–3 lifetime ECL."]},
+{c:"BANK",l:2,q:["Transactor і revolver — у чому різниця та чому це важливо?","Transactor vs revolver — why does it matter?"],a:["Transactor погашає повний борг у пільговий період (дохід — інтерчейндж). Revolver носить борг (дохід — відсотки, але вищий ризик). Різна економіка, ліміти й комунікації.","A transactor repays in full within the grace period (revenue = interchange). A revolver carries a balance (interest revenue, higher risk). Different economics, limits and messaging."]},
+{c:"LOG",l:1,q:["Доба з 16 годин по 100 хвилин. На новому годиннику 12:50 — яка «звичайна» година?","A day has 16 hours of 100 minutes. The new clock shows 12:50 — what is the normal time?"],a:["Хвилин від початку доби: 12×100+50=1250 із 1600. Частка доби = 1250/1600 = 0.78125; у звичайних хвилинах 0.78125×1440=1125 хв = 18:45.","Minutes since start: 12×100+50 = 1250 of 1600. Fraction of day 1250/1600 = 0.78125; in normal minutes 0.78125×1440 = 1125 min = 18:45."]},
+{c:"LOG",l:2,q:["Ліфт: поверхи 1..10, на поверсі k живе 2^k людей. Скільки зупинок?","Elevator: floors 1..10, floor k has 2^k residents. How many stops?"],a:["Умова неоднозначна — це перевірка вміння уточнювати. Якщо кожен виходить на своєму поверсі: 9 зупинок (поверхи 2–10). Якщо всі їдуть на 10-й: людей 2+4+…+1024 = 2046, за місткості 5 потрібно ⌈2046/5⌉ = 410 рейсів. Завжди проговоріть припущення.","The statement is ambiguous — it tests whether you clarify. If everyone exits on their own floor: 9 stops (floors 2–10). If everyone goes to floor 10: people = 2+4+…+1024 = 2046; with capacity 5 you need ⌈2046/5⌉ = 410 trips. Always state your assumptions."]},
+{c:"LOG",l:2,q:["Парадокс днів народження: за якої кількості людей ймовірність збігу >50%?","Birthday paradox: how many people give >50% chance of a shared birthday?"],a:["23 людини. P(немає збігу)=∏(1−k/365), k=0..22 ≈ 0.493. Практика: ризик колізій хешів/ідентифікаторів зростає швидше, ніж інтуїція підказує.","23 people. P(no match)=∏(1−k/365), k=0..22 ≈ 0.493. In practice hash/ID collision risk grows faster than intuition suggests."]},
+{c:"LOG",l:3,q:["Скільки платіжних карток в обігу в Україні? (оцінка Фермі)","Estimate the number of payment cards in circulation in Ukraine (Fermi)"],a:["Структура відповіді: населення ~35–38 млн → дорослі ~30 млн → частка з карткою ~75% → у середньому 1.5–2 картки → 35–45 млн карток. Назвіть припущення й перевірте на здоровий глузд.","Structure: population ~35–38m → adults ~30m → ~75% have a card → 1.5–2 cards each → 35–45m cards. State assumptions and sanity-check."]}
+];
+const $=id=>document.getElementById(id);
+let prog={};try{prog=JSON.parse(localStorage.getItem("iv.v1")||"{}")}catch(e){}
+function save(){try{localStorage.setItem("iv.v1",JSON.stringify(prog))}catch(e){}}
+let pool=[],cur=null,mode=0;
+function filters(){
+ $("fc").innerHTML=`<option value="">${UI.all[L]}</option>`+Object.entries(UI.cats).map(([k,v])=>`<option value="${k}">${v[L==="uk"?0:1]}</option>`).join("");
+ $("fl").innerHTML=`<option value="">${UI.alll[L]}</option>`+[1,2,3].map(n=>`<option value="${n}">${UI.lv[n][0]}</option>`).join("");
+ $("fm").innerHTML=UI.modes[L].map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+}
+function ui(){
+ document.documentElement.lang=L;
+ $("h1").textContent=UI.h1[L];$("sub").textContent=UI.sub[L];
+ $("show").textContent=UI.show[L];$("know").textContent=UI.know[L];$("dunno").textContent=UI.dunno[L];$("skip").textContent=UI.skip[L];
+ $("lg").textContent=L==="uk"?"EN":"UA";
+}
+function rebuild(){
+ const c=$("fc").value,l=$("fl").value;mode=+$("fm").value;
+ pool=Q.map((x,i)=>({x,i})).filter(({x,i})=>(!c||x.c===c)&&(!l||x.l===+l)&&(mode===0||(mode===1&&prog[i]===-1)||(mode===2&&prog[i]===undefined)));
+ next();
+}
+function next(){
+ if(!pool.length){cur=null;$("meta").textContent="";$("q").textContent=UI.empty[L];$("a").style.display="none";stats();return}
+ // weight weak questions higher
+ const w=pool.map(p=>prog[p.i]===-1?3:prog[p.i]===1?0.5:1);let r=Math.random()*w.reduce((a,b)=>a+b,0),k=0;
+ for(;k<pool.length;k++){r-=w[k];if(r<=0)break}
+ if(k>=pool.length)k=pool.length-1;
+ if(pool.length>1&&cur&&pool[k].i===cur.i)k=(k+1)%pool.length;
+ cur=pool[k];const x=cur.x,i=L==="uk"?0:1;
+ $("meta").innerHTML=`<span class="tag">${UI.cats[x.c][i]}</span><span class="tag">${UI.lv[x.l][0]}</span>`;
+ $("q").textContent=x.q[i];$("a").textContent=x.a[i];$("a").style.display="none";stats();
+}
+function stats(){
+ const seen=Object.keys(prog).length,known=Object.values(prog).filter(v=>v===1).length,weak=Object.values(prog).filter(v=>v===-1).length;
+ $("st").textContent=`${UI.done[L]}: ${seen}/${Q.length} · ${UI.known[L]}: ${known} · ${UI.weak[L]}: ${weak}`;
+ $("pb").style.width=(100*known/Q.length)+"%";
+}
+function rate(v){if(!cur)return;prog[cur.i]=v;save();if(mode===1&&v===1)pool=pool.filter(p=>p.i!==cur.i);next()}
+$("show").onclick=()=>{if(cur)$("a").style.display="block"};
+$("know").onclick=()=>rate(1);$("dunno").onclick=()=>rate(-1);$("skip").onclick=next;
+$("lg").onclick=()=>{L=L==="uk"?"en":"uk";ui();const c=$("fc").value,l=$("fl").value,m=$("fm").value;filters();$("fc").value=c;$("fl").value=l;$("fm").value=m;
+ if(cur){const i=L==="uk"?0:1,x=cur.x;$("meta").innerHTML=`<span class="tag">${UI.cats[x.c][i]}</span><span class="tag">${UI.lv[x.l][0]}</span>`;$("q").textContent=x.q[i];$("a").textContent=x.a[i]}stats()};
+["fc","fl","fm"].forEach(id=>$(id).onchange=rebuild);
+ui();filters();rebuild();
+window.__Q=Q;
+</script>
+</body>
+</html>

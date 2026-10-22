@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analyst HTML Tools — Anton Yemets</title>
+<meta name="description" content="Interactive SQL trainer, credit portfolio metrics calculator and interview trainer for data analysts. Інтерактивні інструменти для аналітиків даних.">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 16px}
+h1{margin:0;font-size:28px}
+.lead{color:var(--mut);margin:6px 0 20px;max-width:700px}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:28px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+a.c{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;color:inherit}
+a.c:hover{border-color:var(--acc)}
+a.c b{display:block;margin-bottom:4px}
+a.c span{color:var(--mut);font-size:14px}
+.tag{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--acc);margin-left:6px;font-weight:400}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:99px;cursor:pointer}
+footer{color:var(--mut);font-size:14px;margin-top:32px}
+footer a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+<div><h1 id="h1"></h1><p class="lead" id="lead"></p></div><button id="lg">EN</button></div>
+
+<h2 id="h_int"></h2>
+<div class="grid" id="g1"></div>
+<h2 id="h_mat"></h2>
+<div class="grid" id="g2"></div>
+<h2 id="h_rep"></h2>
+<div class="grid" id="g3"></div>
+<footer id="foot"></footer>
+</div>
+<script>
+const D={
+h1:{uk:"Інструменти для аналітика даних",en:"Tools for data analysts"},
+lead:{uk:"Інтерактивні тренажери та матеріали з банківської аналітики: SQL у браузері, метрики кредитного портфеля, підготовка до інтерв'ю. Усе працює локально, без реєстрації.",en:"Interactive trainers and materials for banking analytics: SQL in the browser, credit portfolio metrics and interview prep. Everything runs locally, no sign-up."},
+hi:{uk:"Інтерактив",en:"Interactive"},hm:{uk:"Навчальні матеріали",en:"Study material"},hr:{uk:"Пов'язані репозиторії",en:"Related repositories"},
+foot:{uk:"Автор: Anton Yemets · Data Analyst · Ліцензія MIT. Дані в тренажерах синтетичні.",en:"By Anton Yemets · Data Analyst · MIT license. All trainer data is synthetic."}
+};
+const INT=[
+["sql-trainer.html",{uk:"SQL-тренажер: кредитні картки",en:"SQL trainer: credit cards"},{uk:"18 завдань від JOIN до віконних функцій, roll rate і вінтажів. SQLite у браузері з автоперевіркою.",en:"18 tasks from JOINs to window functions, roll rate and vintages. In-browser SQLite with auto-check."},"SQL"],
+["metrics-calculator.html",{uk:"Калькулятор метрик",en:"Metrics calculator"},{uk:"EAR, roll rate, NPL, ECL = PD×LGD×EAD та економіка картки.",en:"EAR, roll rate, NPL, ECL = PD×LGD×EAD and card unit economics."},"Risk"],
+["interview-trainer.html",{uk:"Тренажер інтерв'ю",en:"Interview trainer"},{uk:"29 питань: SQL, Python, метрики, статистика, банківська домен, логіка.",en:"29 questions: SQL, Python, metrics, statistics, banking domain, logic."},"Interview"]
+];
+const MAT=[
+["sql_keys.html",{uk:"SQL: розподіл дзвінків",en:"SQL: call distribution"},{uk:"Навчальний матеріал.",en:"Study material."}],
+["problem_solving.html",{uk:"Дорожня карта експерта з кредитного портфеля",en:"Credit portfolio expert roadmap"},{uk:"Етапи розвитку аналітика ризиків.",en:"Growth path for a risk analyst."}],
+["game.html",{uk:"Приватний фінансовий навігатор",en:"Private financial navigator"},{uk:"Інтерактивна гра про особисті фінанси.",en:"Interactive personal-finance game."}],
+["audit.html",{uk:"Генератор інфографік: банкінг України",en:"Infographic generator: Ukrainian banking"},{uk:"Для постів у Threads.",en:"For Threads posts."}]
+];
+const REP=[
+["https://github.com/antonemec/Retail-Data-Analyst-of-credit-cards-portfolio",{uk:"Кредитні картки: глосарій, метрики, кейси",en:"Credit cards: glossary, metrics, cases"},{uk:"Структурований довідник для аналітика карткового портфеля.",en:"Structured reference for a card portfolio analyst."}],
+["https://github.com/antonemec/Data-analyst-interview-tools",{uk:"Підготовка до інтерв'ю",en:"Interview preparation"},{uk:"Банк питань, план на 30 днів, чекліст і кейси.",en:"Question bank, 30-day plan, checklist and cases."}]
+];
+let L="uk";
+function r(){
+ document.documentElement.lang=L;
+ h1.textContent=D.h1[L];lead.textContent=D.lead[L];h_int.textContent=D.hi[L];h_mat.textContent=D.hm[L];h_rep.textContent=D.hr[L];foot.textContent=D.foot[L];lg.textContent=L==="uk"?"EN":"UA";
+ g1.innerHTML=INT.map(x=>`<a class="c" href="${x[0]}"><b>${x[1][L]}<span class="tag">${x[3]}</span></b><span>${x[2][L]}</span></a>`).join("");
+ g2.innerHTML=MAT.map(x=>`<a class="c" href="${x[0]}"><b>${x[1][L]}</b><span>${x[2][L]}</span></a>`).join("");
+ g3.innerHTML=REP.map(x=>`<a class="c" href="${x[0]}" target="_blank" rel="noopener"><b>${x[1][L]}</b><span>${x[2][L]}</span></a>`).join("");
+}
+lg.onclick=()=>{L=L==="uk"?"en":"uk";r()};r();
+</script>
+</body>
+</html>
