@@ -1,4 +1,4 @@
-# sql
+# analyst-html-tools
 
 Collection of standalone HTML pages: learning materials and small projects for data analysts and banking.
 
@@ -13,7 +13,5 @@ Collection of standalone HTML pages: learning materials and small projects for d
 `audit.html` - infographic generator for Threads about banking in Ukraine.
 
 `boxrentdp.html` - car roof box rental page (Dnipro).
-
-`ua_mat.html` - Ukrainian slang encyclopedia (humor, 18+).
 
 Open any file in a browser, no build step needed.
