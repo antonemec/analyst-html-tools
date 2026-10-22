@@ -27,15 +27,20 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:
 .stats{color:var(--mut);font-size:14px}
 .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
 .bar i{display:block;height:100%;background:var(--acc)}
+.mock{display:none}.mock.on{display:block}
+.tmr{float:right;font-variant-numeric:tabular-nums;font-weight:700}.tmr.low{color:var(--bad)}
+textarea.my{width:100%;min-height:110px;margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.res table{border-collapse:collapse;width:100%;margin-top:8px}.res td,.res th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.big{font-size:34px;font-weight:800}
 </style>
 </head>
 <body>
 <header><div class="wrap">
 <h1 id="h1"></h1><p class="s" id="sub"></p></div></header>
-<main>
+<main id="mainw">
 <div class="panel filters">
 <select id="fc"></select><select id="fl"></select><select id="fm"></select>
-<button id="lg">EN</button><a class="pill" href="index.html">← index</a>
+<button id="mk" class="pri"></button><button id="lg">EN</button><a class="pill" href="index.html">← index</a>
 </div>
 <div class="panel">
 <div id="meta"></div>
@@ -43,6 +48,7 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:
 <div id="a"></div>
 <div class="row"><button class="pri" id="show"></button><button class="ok" id="know"></button><button class="no" id="dunno"></button><button id="skip"></button></div>
 </div>
+<div class="panel mock" id="mock"><div id="mh"></div><div id="mb"></div></div>
 <div class="panel stats"><div id="st"></div><div class="bar"><i id="pb" style="width:0"></i></div></div>
 </main>
 <script>
@@ -129,10 +135,80 @@ function stats(){
 function rate(v){if(!cur)return;prog[cur.i]=v;save();if(mode===1&&v===1)pool=pool.filter(p=>p.i!==cur.i);next()}
 $("show").onclick=()=>{if(cur)$("a").style.display="block"};
 $("know").onclick=()=>rate(1);$("dunno").onclick=()=>rate(-1);$("skip").onclick=next;
-$("lg").onclick=()=>{L=L==="uk"?"en":"uk";ui();const c=$("fc").value,l=$("fl").value,m=$("fm").value;filters();$("fc").value=c;$("fl").value=l;$("fm").value=m;
+$("lg").onclick=()=>{L=L==="uk"?"en":"uk";ui();mkui();if(mock||$("mock").classList.contains("on")){mockShow(false)}const c=$("fc").value,l=$("fl").value,m=$("fm").value;filters();$("fc").value=c;$("fl").value=l;$("fm").value=m;
  if(cur){const i=L==="uk"?0:1,x=cur.x;$("meta").innerHTML=`<span class="tag">${UI.cats[x.c][i]}</span><span class="tag">${UI.lv[x.l][0]}</span>`;$("q").textContent=x.q[i];$("a").textContent=x.a[i]}stats()};
 ["fc","fl","fm"].forEach(id=>$(id).onchange=rebuild);
-ui();filters();rebuild();
+
+/* ---- Mock interview / Мок-співбесіда ---- */
+const MK={
+btn:{uk:"Мок-співбесіда (10 питань)",en:"Mock interview (10 questions)"},
+exit:{uk:"Вийти",en:"Exit"},
+intro:{uk:"10 питань із різних тем, по 3 хвилини на кожне. Спробуйте відповісти своїми словами, потім відкрийте еталон і чесно оцініть себе. У кінці — підсумок за темами.",en:"10 questions across topics, 3 minutes each. Answer in your own words, then reveal the model answer and score yourself honestly. A per-topic summary follows."},
+start:{uk:"Почати",en:"Start"},q:{uk:"Питання",en:"Question"},ph:{uk:"Ваша відповідь (необов'язково)…",en:"Your answer (optional)…"},
+rev:{uk:"Показати еталон",en:"Show model answer"},s0:{uk:"Не знав(ла)",en:"Missed"},s1:{uk:"Частково",en:"Partly"},s2:{uk:"Добре",en:"Nailed it"},
+res:{uk:"Результат",en:"Result"},topic:{uk:"Тема",en:"Topic"},sc:{uk:"Бал",en:"Score"},
+again:{uk:"Ще раз",en:"Try again"},
+w:{uk:"Найслабша тема: ",en:"Weakest topic: "},
+v:{uk:["Потрібно повторити базу","Непогано, є прогалини","Сильний результат","Готові до співбесіди"],en:["Review the basics","Decent, with gaps","Strong result","Interview-ready"]},
+tip:{uk:"Питання з балом 0–1 позначено як «слабкі» у звичайному режимі.",en:"Questions scored 0–1 are marked 'weak' in the regular mode."}
+};
+let mock=null,mtimer=null;
+function mkBalanced(n){
+ const by={};Q.forEach((x,i)=>{(by[x.c]=by[x.c]||[]).push(i)});
+ Object.values(by).forEach(a=>a.sort(()=>Math.random()-.5));
+ const cats=Object.keys(by).sort(()=>Math.random()-.5),out=[];
+ while(out.length<n&&cats.some(c=>by[c].length))for(const c of cats){if(out.length>=n)break;if(by[c].length)out.push(by[c].pop())}
+ return out;
+}
+function mockShow(on){
+ document.querySelectorAll("main > .panel").forEach(p=>{if(p.id!=="mock")p.style.display=on?"none":""});
+ $("mock").classList.toggle("on",on);
+ if(!on){clearInterval(mtimer);mock=null;next()}
+}
+function mockIntro(){
+ clearInterval(mtimer);
+ $("mh").innerHTML=`<b>${MK.btn[L]}</b> <button id="mx" style="float:right">${MK.exit[L]}</button>`;
+ $("mb").innerHTML=`<p>${MK.intro[L]}</p><button class="pri" id="ms">${MK.start[L]}</button>`;
+ $("mx").onclick=()=>mockShow(false);
+ $("ms").onclick=()=>{mock={ids:mkBalanced(10),k:0,sc:[]};mockQ()};
+}
+function fmtT(t){return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
+function mockQ(){
+ clearInterval(mtimer);
+ if(mock.k>=mock.ids.length)return mockEnd();
+ const x=Q[mock.ids[mock.k]],i=L==="uk"?0:1;let t=180;
+ $("mh").innerHTML=`<b>${MK.q[L]} ${mock.k+1}/${mock.ids.length}</b> <button id="mx" style="margin-left:8px">${MK.exit[L]}</button><span class="tmr" id="tm">${fmtT(t)}</span>`;
+ $("mx").onclick=()=>mockShow(false);
+ $("mb").innerHTML=`<div><span class="tag">${UI.cats[x.c][i]}</span><span class="tag">${UI.lv[x.l][0]}</span></div><p><b>${x.q[i]}</b></p><textarea class="my" id="my" placeholder="${MK.ph[L]}"></textarea><button class="pri" id="mr">${MK.rev[L]}</button><div id="ma" style="display:none"></div>`;
+ mtimer=setInterval(()=>{t--;const e=$("tm");if(e){e.textContent=fmtT(Math.max(t,0));e.classList.toggle("low",t<=30)}if(t<=0){clearInterval(mtimer);$("mr").click()}},1000);
+ $("mr").onclick=()=>{
+  clearInterval(mtimer);$("mr").style.display="none";const a=$("ma");a.style.display="block";
+  a.innerHTML=`<div class="ans" style="white-space:pre-wrap;border-left:3px solid var(--acc);padding:6px 10px;margin:8px 0"></div><div class="row"><button class="no" data-s="0">${MK.s0[L]}</button><button data-s="1">${MK.s1[L]}</button><button class="ok" data-s="2">${MK.s2[L]}</button></div>`;
+  a.querySelector(".ans").textContent=x.a[i];
+  a.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{mock.sc.push(+b.dataset.s);mock.k++;mockQ()});
+ };
+}
+function mockEnd(){
+ const i=L==="uk"?0:1,by={};let tot=0;
+ mock.ids.forEach((qi,k)=>{const c=Q[qi].c;(by[c]=by[c]||[0,0]);by[c][0]+=mock.sc[k];by[c][1]+=2;tot+=mock.sc[k];
+  prog[qi]=mock.sc[k]===2?1:-1});
+ save();
+ const max=mock.ids.length*2,pct=Math.round(100*tot/max);
+ const rows=Object.entries(by).map(([c,[a,b]])=>({c,a,b,p:a/b}));
+ const weak=rows.slice().sort((x,y)=>x.p-y.p)[0];
+ const vi=pct<40?0:pct<65?1:pct<85?2:3;
+ $("mh").innerHTML=`<b>${MK.res[L]}</b>`;
+ $("mb").className="res";
+ $("mb").innerHTML=`<div class="big">${pct}%</div><p><b>${MK.v[L][vi]}</b> (${tot}/${max})</p><table><tr><th>${MK.topic[L]}</th><th>${MK.sc[L]}</th></tr>${rows.map(r=>`<tr><td>${UI.cats[r.c][i]}</td><td>${r.a}/${r.b}</td></tr>`).join("")}</table><p>${MK.w[L]}<b>${UI.cats[weak.c][i]}</b></p><p class="note" style="color:var(--mut)">${MK.tip[L]}</p><div class="row"><button class="pri" id="ma2">${MK.again[L]}</button><button id="mx2">${MK.exit[L]}</button></div>`;
+ $("ma2").onclick=()=>{$("mb").className="";mockIntro()};
+ $("mx2").onclick=()=>{$("mb").className="";mockShow(false)};
+ stats();
+}
+$("mk").onclick=()=>{mockShow(true);mockIntro()};
+function mkui(){$("mk").textContent=MK.btn[L]}
+window.__mock={start:()=>{mockShow(true);mockIntro()},MK};
+
+ui();mkui();filters();rebuild();
 window.__Q=Q;
 </script>
 </body>

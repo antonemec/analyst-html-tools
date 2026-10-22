@@ -58,6 +58,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:5px}
 </section>
 <p><a class="pill" href="index.html">← index</a></p>
 </main>
+<script src="glossary.js"></script>
 <script>
 "use strict";
 let L="uk";
@@ -151,6 +152,7 @@ function build(){
  });
  document.querySelectorAll("input[data-m]").forEach(inp=>inp.oninput=()=>{vals[+inp.dataset.m][inp.dataset.k]=parseFloat(inp.value)||0;calc(+inp.dataset.m)});
  MODS.forEach((_,i)=>calc(i));
+ if(window.GL)document.querySelectorAll(".sec").forEach(s=>GL.scan(s));
 }
 function calc(i){
  const r=MODS[i].calc(vals[i]);

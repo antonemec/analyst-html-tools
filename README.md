@@ -1,6 +1,6 @@
 # analyst-html-tools
 
-**UA:** Інтерактивні інструменти та навчальні матеріали для аналітиків даних: SQL-тренажер на портфелі кредитних карток, калькулятор метрик ризику, тренажер питань для співбесіди.
+**UA:** Інтерактивні інструменти та навчальні матеріали для аналітиків даних: SQL-тренажер на портфелі кредитних карток, калькулятор метрик ризику, тренажер питань для співбесіди та мінікурс з кредитних карток.
 **EN:** Interactive tools and study material for data analysts: a SQL trainer on a credit card portfolio, a risk metrics calculator and an interview question trainer.
 
 **Live / Онлайн:** https://antonemec.github.io/analyst-html-tools/
@@ -13,8 +13,9 @@
 |---|---|
 | [`index.html`](index.html) | Головна: навігація між усіма інструментами / hub |
 | [`sql-trainer.html`](sql-trainer.html) | 18 SQL-завдань (Easy → Hard) з автоперевіркою; SQLite (sql.js) у браузері; синтетичні дані: 400 клієнтів, ~530 карток, ~50 тис. транзакцій, 12 місяців знімків прострочки |
+| [`course-credit-cards.html`](course-credit-cards.html) | Мінікурс «Кредитні картки за 7 уроків»: DPD, roll rate, вінтажі, NPL і CoR, ECL, економіка картки, діагностика; інтерактивні демо, картки, квізи, підсумкове повторення |
 | [`metrics-calculator.html`](metrics-calculator.html) | EAR і пільговий період, roll rate і NPL, ECL = PD×LGD×EAD, економіка картки (unit economics) |
-| [`interview-trainer.html`](interview-trainer.html) | 29 питань із відповідями за темами й рівнями; слабкі питання повертаються частіше |
+| [`interview-trainer.html`](interview-trainer.html) | 29 питань із відповідями; слабкі питання повертаються частіше; режим мок-співбесіди на 10 питань із таймером і підсумком за темами |
 | [`sql_keys.html`](sql_keys.html), [`problem_solving.html`](problem_solving.html), [`game.html`](game.html), [`audit.html`](audit.html) | Раніші навчальні сторінки / earlier study pages |
 
 Усі інтерфейси двомовні (UA/EN). All interfaces are bilingual.

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SQL-тренажер: кредитні картки | SQL Trainer: Credit Cards</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="glossary.js"></script>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb;--ok:#14803c;--bad:#b42318;--code:#0f1722;--codeink:#e6edf5}
 @media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff;--ok:#4cc27a;--bad:#ff8a7a;--code:#0a0f15;--codeink:#e6edf5}}
@@ -286,7 +287,7 @@ function list(){
 function task(){
  const L=lang==="uk"?0:1,t=TASKS[cur];
  $("head").innerHTML=`<h2 style="margin:0 0 4px">${cur+1}. ${esc(t.t[L])} <span class="pill">${t.lv}</span></h2>`;
- $("desc").textContent=t.d[L];
+ $("desc").textContent=t.d[L];if(window.GL)GL.scan($("desc"));
  $("sql").value="";$("out").innerHTML="";showMsg("","");$("msg").style.display="none";
  list();
 }

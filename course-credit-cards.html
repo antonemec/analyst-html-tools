@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кредитні картки за 7 уроків | Credit Cards in 7 Lessons</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb;--ok:#14803c;--bad:#b42318;--soft:#eaf2fc}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff;--ok:#4cc27a;--bad:#ff8a7a;--soft:#172433}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:16px;border-bottom:1px solid var(--line);background:var(--card)}
+.wrap{max-width:1080px;margin:0 auto}
+h1{margin:0;font-size:21px}h2{margin:0 0 6px;font-size:20px}h3{margin:20px 0 8px;font-size:16px}
+p.s{margin:4px 0 0;color:var(--mut);font-size:14px}
+.top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+button,a.pill{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:10px;text-decoration:none;font-size:14px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.layout{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:250px 1fr;gap:16px;padding:16px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+#side{display:flex;flex-direction:column;gap:6px;align-self:start;position:sticky;top:8px}
+@media(max-width:800px){#side{position:static;flex-direction:row;flex-wrap:wrap}}
+#side button{text-align:left;display:flex;gap:8px;align-items:center}
+#side button.cur{border-color:var(--acc);background:var(--soft)}
+#side .n{display:inline-flex;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);align-items:center;justify-content:center;font-size:12px;flex:none}
+#side .done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+.bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok);width:0}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.why{background:var(--soft);border-left:4px solid var(--acc);padding:10px 14px;border-radius:8px;margin:10px 0 14px}
+.demo{border:1px dashed var(--acc);border-radius:12px;padding:14px;margin:14px 0}
+.demo h3{margin:0 0 8px}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 16px}
+.ctl label{font-size:13px;color:var(--mut);display:block}.ctl label b{color:var(--ink);float:right}
+input[type=range]{width:100%}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.kpi span{font-size:12px;color:var(--mut);display:block}.kpi b{font-size:19px}
+.good{color:var(--ok)}.badc{color:var(--bad)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.fc{min-height:96px;text-align:left;border-radius:12px;padding:12px;background:var(--bg);white-space:normal}
+.fc small{display:block;color:var(--mut);margin-bottom:4px}
+.q{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.q p{margin:0 0 8px;font-weight:600}
+.opt{display:block;width:100%;text-align:left;margin:5px 0;white-space:normal}
+.opt.right{border-color:var(--ok);background:rgba(20,128,60,.12)}.opt.wrong{border-color:var(--bad);background:rgba(180,35,24,.12)}
+.exp{margin-top:8px;font-size:14px;color:var(--mut)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:space-between}
+svg text{fill:var(--mut);font-size:11px}
+.big{font-size:38px;font-weight:800}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.note{color:var(--mut);font-size:13px}
+</style>
+<script src="glossary.js"></script>
+</head>
+<body>
+<header><div class="wrap">
+<h1 id="h1"></h1><p class="s" id="sub"></p>
+<div class="top"><button id="lg">EN</button><a class="pill" href="index.html">← index</a><span class="note" id="prog"></span></div>
+<div class="bar"><i id="pb"></i></div>
+</div></header>
+<div class="layout"><nav id="side"></nav><main id="main"></main></div>
+<script>
+"use strict";
+let L="uk";
+const $=id=>document.getElementById(id);
+const T=x=>x[L==="uk"?0:1];
+const UI={
+h1:["Кредитні картки за 7 уроків","Credit cards in 7 lessons"],
+sub:["Від днів прострочки до очікуваних збитків: короткий інтерактивний курс для аналітика. Дані й приклади умовні.","From days past due to expected loss: a short interactive course for analysts. Data and examples are illustrative."],
+why:["Навіщо це вам","Why it matters"],demo:["Спробуйте самі","Try it yourself"],cards:["Картки для повторення (натисніть, щоб перевернути)","Flashcards (tap to flip)"],
+quiz:["Перевірте себе","Check yourself"],next:["Далі →","Next →"],prev:["← Назад","← Back"],final:["Підсумкове повторення","Final review"],
+done:["пройдено","completed"],right:["Вірно. ","Correct. "],wrong:["Не зовсім. ","Not quite. "],
+fin:{
+ intro:["10 випадкових питань з усіх уроків. Результат покаже, які теми повторити.","10 random questions from all lessons. The result shows which topics to review."],
+ start:["Почати","Start"],again:["Ще раз","Try again"],res:["Результат","Result"],rev:["Повторіть уроки: ","Review lessons: "],all:["Усі теми засвоєно — переходьте до практики.","All topics solid — move on to practice."],
+ go:["Практика","Practice"],
+ links:[["SQL-тренажер","sql-trainer.html"],["Калькулятор метрик","metrics-calculator.html"],["Тренажер співбесід","interview-trainer.html"]]
+}};
+/* ---------- lesson data ---------- */
+const LES=[
+{ t:["DPD і кошики прострочки","DPD and delinquency buckets"],
+ why:["Кожен звіт про якість портфеля починається з одного поля — днів прострочки. Помилка в його визначенні ламає всі наступні метрики.","Every portfolio-quality report starts with one field: days past due. A flaw in its definition breaks every metric built on top."],
+ body:[["DPD (days past due) — кількість днів від дати, коли платіж мав бути здійснений, до дати погашення простроченої суми або до звітної дати. Для карток зазвичай рахують від дати мінімального платежу.","Рахунки групують у кошики: поточний (0), 1–30, 31–60, 61–90 і 90+. Кошик 90+ зазвичай вважають непрацюючим (NPL). За IFRS 9 діють спростовні презумпції: 30 DPD — істотне зростання кредитного ризику (стадія 2), 90 DPD — дефолт (стадія 3). Точні правила завжди перевіряйте в політиці вашого банку."],
+        ["DPD (days past due) is the number of days from the date a payment was due to the date the overdue amount is repaid, or to the reporting date. For cards it is usually counted from the minimum-payment due date.","Accounts are grouped into buckets: current (0), 1–30, 31–60, 61–90 and 90+. The 90+ bucket is usually treated as non-performing (NPL). IFRS 9 has rebuttable presumptions: 30 DPD signals a significant increase in credit risk (stage 2), 90 DPD signals default (stage 3). Always check your bank's own policy for exact rules."]],
+ demo:{f:[["d","Днів прострочки","Days past due",12,0,150,1]],
+  calc:v=>{const d=v.d,b=d===0?["Поточний","Current"]:d<=30?["1–30","1–30"]:d<=60?["31–60","31–60"]:d<=90?["61–90","61–90"]:["90+","90+"];
+   const st=d>=90?3:d>=30?2:1;
+   return [[["Кошик","Bucket"],b[L==="uk"?0:1]],[["Стадія IFRS 9 (за презумпцією)","IFRS 9 stage (presumption)"],String(st),st===3?"badc":st===2?"":"good"],[["Непрацюючий (NPL)?","Non-performing (NPL)?"],d>=90?(L==="uk"?"Так":"Yes"):(L==="uk"?"Ні":"No"),d>=90?"badc":"good"]]},
+  note:["Межі кошиків умовні: тут 90 днів рахуємо як «90+» (≥90), а в деяких банках — «>90».","Bucket edges vary: here 90 days counts as '90+' (≥90), while some banks use '>90'."]},
+ fc:[[["Що таке DPD?","What is DPD?"],["Кількість днів прострочки платежу.","Number of days a payment is overdue."]],
+     [["Який поріг дефолту за IFRS 9 (презумпція)?","IFRS 9 default presumption?"],["90 днів прострочки.","90 days past due."]],
+     [["Що означає стадія 2?","What does stage 2 mean?"],["Істотне зростання кредитного ризику (презумпція — 30 DPD).","Significant increase in credit risk (presumption: 30 DPD)."]]],
+ q:[{q:["Платіж мав бути 5 жовтня, клієнт сплатив 6 листопада. Який DPD на 31 жовтня?","Payment was due on 5 October, the customer paid on 6 November. What is DPD on 31 October?"],
+     o:[["0","0"],["26","26"],["31","31"],["56","56"]],a:1,e:["31 − 5 = 26 днів, це кошик 1–30.","31 − 5 = 26 days, bucket 1–30."]},
+    {q:["Картка має 92 DPD. У якій стадії IFRS 9 вона за презумпцією?","A card is 92 DPD. Which IFRS 9 stage is it in by presumption?"],
+     o:[["Стадія 1","Stage 1"],["Стадія 2","Stage 2"],["Стадія 3","Stage 3"],["Залежить від суми","Depends on amount"]],a:2,e:["Понад 90 днів — презумпція дефолту, тобто стадія 3.","Over 90 days is the default presumption, so stage 3."]}]},
+
+{ t:["Roll rate: як борг «скочується»","Roll rate: how debt rolls forward"],
+ why:["Roll rate показує швидкість погіршення портфеля раніше, ніж вона видна в NPL. Це головний ранній індикатор для колекшну.","Roll rate shows deterioration earlier than NPL does. It is the main early-warning indicator for collections."],
+ body:[["Roll rate = частка боргу (або рахунків) з кошика k на початку місяця, що опинилась у кошику k+1 наприкінці місяця. Рахують за сумою або за кількістю рахунків; для фінансових висновків краще за сумою.","Добуток послідовних roll rate дає оцінку частки боргу, яка дійде до 90+. Частина клієнтів «лікується» (cure) і повертається в поточний: це зменшує реальний шлях до дефолту."],
+        ["Roll rate = share of balance (or accounts) in bucket k at month start that is in bucket k+1 at month end. It can be counted by amount or by accounts; for financial conclusions use amount.","The product of consecutive roll rates estimates the share of balance that reaches 90+. Some customers cure and return to current, which lowers the real path to default."]],
+ demo:{f:[["b","Борг у кошику 1–30, тис. грн","Balance in 1–30, UAH k",1000,100,5000,100],["r1","Roll 1–30 → 31–60, %","Roll 1–30 → 31–60, %",40,5,90,1],["r2","Roll 31–60 → 61–90, %","Roll 31–60 → 61–90, %",60,5,95,1],["r3","Roll 61–90 → 90+, %","Roll 61–90 → 90+, %",80,5,99,1]],
+  calc:v=>{const p=v.r1/100*v.r2/100*v.r3/100;return [[["Дійде до 90+, тис. грн","Reaches 90+, UAH k"],Math.round(v.b*p).toLocaleString("uk-UA"),"badc"],[["Частка шляху до 90+","Path to 90+ share"],(p*100).toFixed(1)+"%"],[["Не перейде в 90+ на останньому кроці, %","Does not roll to 90+ at last step, %"],(100-v.r3)+"%","good"]]},
+  note:["Змініть перший roll rate з 40% до 30%: частка шляху до 90+ зменшується на чверть, а не на 10 п.п.","Change the first roll rate from 40% to 30%: the path share drops by a quarter, not by 10 pp."]},
+ fc:[[["Формула roll rate","Roll rate formula"],["Борг, що перейшов з кошика k у k+1 / борг у кошику k на початок періоду.","Balance that moved from bucket k to k+1 / balance in bucket k at period start."]],
+     [["Що таке cure rate?","What is cure rate?"],["Частка прострочених, що повернулась у поточні.","Share of delinquent that returned to current."]],
+     [["Чому за сумою краще?","Why prefer amount?"],["Збитки залежать від грошей, а не від кількості рахунків.","Losses depend on money, not number of accounts."]]],
+ q:[{q:["У кошику 31–60 було 1000 рахунків: 600 перейшли в 61–90, 100 повернулись у поточні, 300 лишились. Який roll rate 31–60 → 61–90?","In bucket 31–60 there were 1000 accounts: 600 moved to 61–90, 100 cured, 300 stayed. What is the 31–60 → 61–90 roll rate?"],
+     o:[["30%","30%"],["60%","60%"],["70%","70%"],["90%","90%"]],a:1,e:["600 / 1000 = 60%. Ті, що залишились чи вилікувались, не рахуються.","600 / 1000 = 60%. Those who stayed or cured do not count."]},
+    {q:["Roll rate: 1–30→31–60 = 30%, 31–60→61–90 = 50%, 61–90→90+ = 80%. Яка частка боргу з 1–30 дійде до 90+?","Roll rates: 1–30→31–60 = 30%, 31–60→61–90 = 50%, 61–90→90+ = 80%. What share of 1–30 balance reaches 90+?"],
+     o:[["12%","12%"],["30%","30%"],["53%","53%"],["160%","160%"]],a:0,e:["0,3 × 0,5 × 0,8 = 0,12, тобто 12%.","0.3 × 0.5 × 0.8 = 0.12, i.e. 12%."]}]},
+
+{ t:["Вінтажний аналіз","Vintage analysis"],
+ why:["Вінтаж відповідає на питання, чи гірше стали видавати картки, а не просто чи погіршився портфель. Без нього легко сплутати якість видачі з віком портфеля.","A vintage answers whether you started issuing worse cards, not merely whether the portfolio got worse. Without it, underwriting quality is easily confused with portfolio age."],
+ body:[["Вінтаж — когорта карток, виданих в один період (місяць або квартал). Для кожної когорти рахують накопичену частку проблемних (наприклад, 90+) за місяцями життя (months on book, MOB).","Порівнювати когорти потрібно за однаковим MOB, а не за календарною датою. Молода когорта ще не «визріла», тому її поточний показник нижчий за потенційний. Крива, що йде вище за попередні на тому ж MOB, сигналізує про гіршу якість видачі, зміну каналу або макроекономіку."],
+        ["A vintage is a cohort of cards issued in the same period (month or quarter). For each cohort you track the cumulative share of bad accounts (e.g. 90+) by months on book (MOB).","Compare cohorts at the same MOB, not on the same calendar date. A young cohort has not seasoned yet, so its current figure is below its potential. A curve above earlier ones at the same MOB signals weaker underwriting, a channel change or macro effects."]],
+ demo:"vintage",
+ fc:[[["MOB","MOB"],["Months on book: скільки місяців картці від видачі.","Months on book: age of the card in months."]],
+     [["Чому не порівнювати за календарем?","Why not compare by calendar?"],["Когорти різного віку не однаково «визріли».","Cohorts of different ages have seasoned differently."]],
+     [["Що означає вища крива?","What does a higher curve mean?"],["Гіршу якість когорти на тому ж віці.","Worse cohort quality at the same age."]]],
+ q:[{q:["Когорта 2025-Q1 на 6-му MOB має 90+ вище, ніж 2024-Q1 на 6-му MOB. Який висновок найлогічніший?","Cohort 2025-Q1 at MOB 6 has higher 90+ than 2024-Q1 at MOB 6. What is the most reasonable conclusion?"],
+     o:[["Портфель просто старший","The portfolio is simply older"],["Нова когорта гірша на тому ж віці","The new cohort is worse at the same age"],["Це випадковість, нічого не робити","Pure noise, do nothing"],["Дані некоректні","The data is wrong"]],a:1,e:["Той самий MOB знімає ефект віку. Різниця — якість когорти; шукайте причину у відсічці, каналі чи макро.","Same MOB removes the age effect. The gap is cohort quality; look at cut-off, channel or macro."]},
+    {q:["Чому не можна порівнювати поточний 90+ когорти 2024-Q1 (18 міс.) з когортою 2026-Q1 (6 міс.) «як є»?","Why can't you compare the current 90+ of cohort 2024-Q1 (18 months) with cohort 2026-Q1 (6 months) as is?"],
+     o:[["Різні валюти","Different currencies"],["Різний вік: молода когорта ще не визріла","Different age: the young cohort has not seasoned"],["Різна кількість карток","Different card counts"],["Це заборонено","It is not allowed"]],a:1,e:["Порівнюйте за однаковим MOB.","Compare at the same MOB."]}]},
+
+{ t:["NPL, покриття й вартість ризику","NPL, coverage and cost of risk"],
+ why:["Три цифри з квартального звіту — NPL ratio, покриття й CoR — найчастіше питають у співбесіді та на нарадах. Важливо розуміти, що кожна з них приховує.","Three numbers from a quarterly report, NPL ratio, coverage and CoR, come up most often in interviews and meetings. It matters what each one hides."],
+ body:[["NPL ratio = NPL (зазвичай 90+) / валовий портфель. Покриття (coverage) = резерви / NPL. CoR (cost of risk) = витрати на резерви за період, приведені до року, / середній валовий портфель.","NPL ratio може падати без покращення якості: списання виводять борг із чисельника, а зростання видачі збільшує знаменник. Тому дивіться разом NPL, списання, CoR і вінтажі."],
+        ["NPL ratio = NPL (usually 90+) / gross portfolio. Coverage = provisions / NPL. CoR (cost of risk) = provision charge for the period, annualised, / average gross portfolio.","NPL ratio can fall without any quality improvement: write-offs remove debt from the numerator and new lending grows the denominator. Read NPL, write-offs, CoR and vintages together."]],
+ demo:{f:[["g","Валовий портфель, млн","Gross portfolio, M",500,100,1000,10],["n","NPL, млн","NPL, M",35,1,150,1],["p","Залишок резервів, млн","Provision stock, M",42,1,200,1],["c","Резерви за квартал, млн","Quarterly charge, M",6,0,40,0.5],["a","Середній портфель, млн","Average portfolio, M",490,100,1000,10]],
+  calc:v=>{const npl=v.n/v.g*100,cov=v.p/v.n*100,cor=v.c*4/v.a*100;return [[["NPL ratio","NPL ratio"],npl.toFixed(1)+"%",npl>10?"badc":""],[["Покриття NPL","NPL coverage"],cov.toFixed(0)+"%",cov<100?"badc":"good"],[["CoR (річна)","CoR (annualised)"],cor.toFixed(1)+"%"]]},
+  note:["Збільшіть портфель, не змінюючи NPL: NPL ratio впаде, хоча якість та сама.","Increase the portfolio with NPL unchanged: the ratio falls although quality is the same."]},
+ fc:[[["Формула NPL ratio","NPL ratio formula"],["NPL / валовий портфель.","NPL / gross portfolio."]],
+     [["Що показує покриття?","What does coverage show?"],["Яку частину NPL закрито резервами.","How much of NPL is covered by provisions."]],
+     [["CoR — це...","CoR is..."],["Річні витрати на резерви / середній портфель.","Annualised provision charge / average portfolio."]]],
+ q:[{q:["Валовий портфель 200 млн, NPL 14 млн. Який NPL ratio?","Gross portfolio 200M, NPL 14M. What is the NPL ratio?"],
+     o:[["5%","5%"],["7%","7%"],["14%","14%"],["28%","28%"]],a:1,e:["14 / 200 = 7%.","14 / 200 = 7%."]},
+    {q:["NPL ratio знизився, а CoR не змінився. Яка з причин найімовірніша?","NPL ratio fell while CoR stayed flat. Which cause is most plausible?"],
+     o:[["Списання й зростання видачі","Write-offs and portfolio growth"],["Падіння курсу","Currency drop"],["Помилка в DPD завжди","Always a DPD error"],["Зміна логотипу банку","A bank logo change"]],a:0,e:["Списання зменшують чисельник, а нова видача збільшує знаменник.","Write-offs shrink the numerator while new lending grows the denominator."]}]},
+
+{ t:["PD × LGD × EAD і ECL","PD × LGD × EAD and ECL"],
+ why:["Резерви напряму б'ють по прибутку банку. Аналітик, який розуміє ECL, може пояснити, чому резерв зріс, а не лише повідомити, що зріс.","Provisions hit profit directly. An analyst who understands ECL can explain why the allowance grew, not just report that it did."],
+ body:[["ECL (очікувані кредитні збитки) = PD × LGD × EAD. PD — імовірність дефолту, LGD — частка втрат після повернень, EAD — експозиція на момент дефолту.","Для карток EAD = використаний баланс + CCF × невикористаний ліміт. CCF (credit conversion factor) показує, яку частину ліміту клієнт ймовірно використає до дефолту. За IFRS 9 для стадії 1 рахують 12-місячний ECL, для стадій 2 і 3 — на весь строк (lifetime)."],
+        ["ECL (expected credit loss) = PD × LGD × EAD. PD is the probability of default, LGD the loss share after recoveries, EAD the exposure at default.","For cards EAD = drawn balance + CCF × undrawn limit. CCF (credit conversion factor) is the share of the limit the customer is expected to draw before default. Under IFRS 9, stage 1 uses 12-month ECL; stages 2 and 3 use lifetime ECL."]],
+ demo:{f:[["l","Ліміт, грн","Limit, UAH",50000,10000,200000,1000],["b","Використаний баланс, грн","Drawn balance, UAH",20000,0,200000,1000],["ccf","CCF, %","CCF, %",50,0,100,5],["pd","PD, %","PD, %",5,0.5,100,0.5],["lgd","LGD, %","LGD, %",80,10,100,5]],
+  calc:v=>{const u=Math.max(v.l-v.b,0),ead=v.b+v.ccf/100*u,ecl=v.pd/100*v.lgd/100*ead;return [[["EAD, грн","EAD, UAH"],Math.round(ead).toLocaleString("uk-UA")],[["ECL, грн","ECL, UAH"],Math.round(ecl).toLocaleString("uk-UA"),"badc"],[["ECL / баланс","ECL / balance"],v.b?(ecl/v.b*100).toFixed(1)+"%":"–"]]},
+  note:["Збільште CCF: резерв росте навіть без жодної нової витрати клієнта.","Raise CCF: the allowance grows even if the customer spends nothing new."]},
+ fc:[[["Формула ECL","ECL formula"],["PD × LGD × EAD.","PD × LGD × EAD."]],
+     [["Що таке CCF?","What is CCF?"],["Частка невикористаного ліміту, яку клієнт ймовірно використає до дефолту.","Share of undrawn limit expected to be drawn before default."]],
+     [["Горизонт у стадії 1 і 2?","Horizon in stage 1 vs 2?"],["Стадія 1: 12 місяців. Стадія 2: весь строк.","Stage 1: 12 months. Stage 2: lifetime."]]],
+ q:[{q:["PD 5%, LGD 80%, EAD 10 000 грн. Чому дорівнює ECL?","PD 5%, LGD 80%, EAD UAH 10,000. What is ECL?"],
+     o:[["40 грн","UAH 40"],["400 грн","UAH 400"],["4 000 грн","UAH 4,000"],["8 000 грн","UAH 8,000"]],a:1,e:["0,05 × 0,8 × 10 000 = 400 грн.","0.05 × 0.8 × 10,000 = UAH 400."]},
+    {q:["Що зазвичай відбувається з резервом, коли картка переходить зі стадії 1 у стадію 2?","What usually happens to the allowance when a card moves from stage 1 to stage 2?"],
+     o:[["Не змінюється","It does not change"],["Зменшується","It falls"],["Зростає: горизонт стає lifetime","It grows: the horizon becomes lifetime"],["Дорівнює нулю","It becomes zero"]],a:2,e:["Lifetime PD вищий за 12-місячний, тому резерв різко зростає.","Lifetime PD is higher than 12-month PD, so the allowance jumps."]}]},
+
+{ t:["Transactor, revolver і економіка картки","Transactor, revolver and card economics"],
+ why:["Одна й та сама картка може бути прибутковою для одного клієнта і збитковою для іншого. Розуміння джерел доходу визначає, кого залучати і як налаштувати бонуси.","The same card can be profitable for one customer and loss-making for another. Knowing the revenue sources decides whom to acquire and how to set rewards."],
+ body:[["Transactor платить повністю в пільговий період: банк заробляє інтерчейндж, а відсотків немає. Revolver тримає борг і платить відсотки: більший дохід, але й більший ризик.","Дохід картки = інтерчейндж із обороту + відсотки + комісії. Витрати = вартість фінансування + очікувані збитки + операційні витрати + винагороди (кешбек). Беззбитковий оборот — це обсяг витрат, за якого дохід від обороту покриває решту витрат."],
+        ["A transactor repays in full inside the grace period: the bank earns interchange and no interest. A revolver carries a balance and pays interest: higher revenue but also higher risk.","Card revenue = interchange on spend + interest + fees. Costs = funding cost + expected loss + operating cost + rewards (cashback). Break-even spend is the spend level at which spend-based income covers the remaining costs."]],
+ demo:{f:[["sp","Оборот за місяць, грн","Monthly spend, UAH",15000,0,60000,500],["ic","Інтерчейндж, %","Interchange, %",1,0,3,0.1],["rw","Кешбек, %","Rewards, %",0.5,0,3,0.1],["bal","Середній баланс, грн","Average balance, UAH",8000,0,50000,500],["sh","Частка балансу з відсотками, %","Interest-bearing share, %",60,0,100,5],["apr","Ставка, % річних","APR, %",48,0,80,1],["fu","Вартість фінансування, %","Funding cost, %",15,0,40,1],["cor","CoR, % річних","CoR, % p.a.",8,0,40,1],["op","Опер. витрати/міс, грн","Opex per month, UAH",40,0,300,5]],
+  calc:v=>{const intr=v.bal*v.sh/100*v.apr/100/12,spendInc=v.sp*(v.ic-v.rw)/100,K=intr-v.bal*v.fu/100/12-v.bal*v.cor/100/12-v.op,profit=spendInc+K;
+   const be=K>=0?0:(v.ic>v.rw?-K/((v.ic-v.rw)/100):Infinity);
+   return [[["Відсотковий дохід/міс, грн","Interest income / month, UAH"],Math.round(intr).toLocaleString("uk-UA")],[["Прибуток картки/міс, грн","Card profit / month, UAH"],Math.round(profit).toLocaleString("uk-UA"),profit>=0?"good":"badc"],[["Беззбитковий оборот, грн","Break-even spend, UAH"],isFinite(be)?Math.round(be).toLocaleString("uk-UA"):"∞"]]},
+  note:["Поставте частку відсотків 0 (transactor) і подивіться, коли картка стає прибутковою лише завдяки інтерчейнджу.","Set interest share to 0 (transactor) and see when the card pays for itself on interchange alone."]},
+ fc:[[["Transactor","Transactor"],["Платить повністю в пільговий період; дохід — інтерчейндж.","Repays in full in the grace period; earns interchange."]],
+     [["Revolver","Revolver"],["Тримає борг і платить відсотки.","Carries a balance and pays interest."]],
+     [["Беззбитковий оборот","Break-even spend"],["Оборот, за якого дохід від обороту покриває інші витрати.","Spend at which spend-based income covers other costs."]]],
+ q:[{q:["Transactor витрачає 20 000 грн на місяць. Інтерчейндж 1%, кешбек 0,5%, опер. витрати 40 грн. Який прибуток, ігноруючи фінансування й ризик?","A transactor spends UAH 20,000 a month. Interchange 1%, rewards 0.5%, opex UAH 40. What is the profit, ignoring funding and risk?"],
+     o:[["200 грн","UAH 200"],["100 грн","UAH 100"],["60 грн","UAH 60"],["−40 грн","−UAH 40"]],a:2,e:["200 − 100 − 40 = 60 грн.","200 − 100 − 40 = UAH 60."]},
+    {q:["Інтерчейндж знизили з 1% до 0,5%, кешбек лишився 0,5%. Що з внеском обороту в прибуток?","Interchange was cut from 1% to 0.5% while rewards stay at 0.5%. What happens to the contribution of spend?"],
+     o:[["Подвоївся","Doubled"],["Став нульовим","Became zero"],["Не змінився","Unchanged"],["Став від'ємним на 2%","Became −2%"]],a:1,e:["0,5% − 0,5% = 0: картка тепер залежить від відсотків і комісій.","0.5% − 0.5% = 0: the card now depends on interest and fees."]}]},
+
+{ t:["Діагностика: чому виріс NPL","Diagnosis: why did NPL rise"],
+ why:["Першим питанням керівника буде «чому». Розклад на ефект структури й ефект ставки відповідає на нього за хвилини й захищає від хибних висновків.","The first question from management will be 'why'. Splitting into a mix effect and a rate effect answers it in minutes and guards against false conclusions."],
+ body:[["Загальний показник = Σ (частка сегмента × ставка сегмента). Зміну розкладають на ефект структури (змінились частки сегментів) і ефект ставки (змінились ставки в сегментах).","Ефект структури = Σ (w₂ − w₁) × r₁. Ефект ставки = Σ w₂ × (r₂ − r₁). Разом вони дають повну зміну. Можлива ситуація, коли ставки в усіх сегментах знизились, а загальний показник виріс, бо зросла частка ризикового сегмента."],
+        ["The total = Σ (segment share × segment rate). Change splits into a mix effect (segment shares moved) and a rate effect (rates inside segments moved).","Mix effect = Σ (w₂ − w₁) × r₁. Rate effect = Σ w₂ × (r₂ − r₁). Together they equal the full change. It is possible that every segment's rate fell yet the total rose because the risky segment grew."]],
+ demo:{f:[["wb1","Частка ризикового сегмента, Q1, %","Risky segment share, Q1, %",20,0,100,1],["wb2","Частка ризикового сегмента, Q2, %","Risky segment share, Q2, %",35,0,100,1],["ra1","Дефолт безпечного, Q1, %","Safe segment rate, Q1, %",2,0,20,0.1],["ra2","Дефолт безпечного, Q2, %","Safe segment rate, Q2, %",1.8,0,20,0.1],["rb1","Дефолт ризикового, Q1, %","Risky segment rate, Q1, %",10,0,40,0.1],["rb2","Дефолт ризикового, Q2, %","Risky segment rate, Q2, %",9,0,40,0.1]],
+  calc:v=>{const w1=[1-v.wb1/100,v.wb1/100],w2=[1-v.wb2/100,v.wb2/100],r1=[v.ra1,v.rb1],r2=[v.ra2,v.rb2];
+   let t1=0,t2=0,mix=0,rate=0;for(let i=0;i<2;i++){t1+=w1[i]*r1[i];t2+=w2[i]*r2[i];mix+=(w2[i]-w1[i])*r1[i];rate+=w2[i]*(r2[i]-r1[i])}
+   const f=x=>(x>=0?"+":"")+x.toFixed(2)+" п.п.";const fe=x=>(x>=0?"+":"")+x.toFixed(2)+" pp";const g=L==="uk"?f:fe;
+   return [[["Загалом Q1","Total Q1"],t1.toFixed(2)+"%"],[["Загалом Q2","Total Q2"],t2.toFixed(2)+"%"],[["Зміна","Change"],g(t2-t1),t2>t1?"badc":"good"],[["Ефект структури","Mix effect"],g(mix),mix>0?"badc":"good"],[["Ефект ставки","Rate effect"],g(rate),rate>0?"badc":"good"]]},
+  note:["За замовчуванням ставки в обох сегментах знизились, а загальний показник зріс: це чистий ефект структури.","By default both segment rates fell yet the total rose: a pure mix effect."]},
+ fc:[[["Ефект структури","Mix effect"],["Зміна через перерозподіл часток сегментів.","Change from shifts in segment shares."]],
+     [["Ефект ставки","Rate effect"],["Зміна через ставки всередині сегментів.","Change from rates inside segments."]],
+     [["З чого почати діагностику?","Where to start diagnosing?"],["Знаменник, сегменти, вінтажі, канали видачі, потім макро.","Denominator, segments, vintages, channels, then macro."]]],
+ q:[{q:["Частка ризикового сегмента зросла, ставки в обох сегментах не змінились. Що дає зміну загального показника?","The risky segment's share grew while both segment rates stayed unchanged. What drives the change in the total?"],
+     o:[["Ефект ставки","Rate effect"],["Ефект структури","Mix effect"],["Нічого, показник не зміниться","Nothing, the total will not change"],["Помилка даних","Data error"]],a:1,e:["Ставки однакові, тож змінилась лише структура.","Rates are equal, so only the mix changed."]},
+    {q:["Ставки дефолту знизились в усіх сегментах, а загальна ставка зросла. Яке пояснення можливе?","Default rates fell in every segment, yet the total rose. Which explanation is possible?"],
+     o:[["Це неможливо","It is impossible"],["Зросла частка ризикового сегмента","The risky segment's share grew"],["Помилка округлення завжди","Always rounding error"],["Зміна валюти звіту","Change of reporting currency"]],a:1,e:["Так: ефект структури може перекрити зниження ставок.","Yes: the mix effect can outweigh falling rates."]}]}
+];
+/* ---------- state ---------- */
+let st={done:{},ans:{}},cur=0,fin=null;
+try{st=Object.assign(st,JSON.parse(localStorage.getItem("course.cc.v1")||"{}"))}catch(e){}
+function save(){try{localStorage.setItem("course.cc.v1",JSON.stringify(st))}catch(e){}}
+function lessonDone(i){return LES[i].q.every((_,k)=>st.ans[i+"-"+k]===LES[i].q[k].a)}
+/* ---------- rendering ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function side(){
+ const n=LES.filter((_,i)=>lessonDone(i)).length;
+ $("side").innerHTML=LES.map((l,i)=>`<button class="${i===cur&&!fin?"cur":""} ${lessonDone(i)?"done":""}" data-i="${i}"><span class="n">${lessonDone(i)?"✓":i+1}</span>${esc(T(l.t))}</button>`).join("")+`<button class="${fin?"cur":""}" id="sf"><span class="n">★</span>${T(UI.final)}</button>`;
+ $("side").querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{fin=null;cur=+b.dataset.i;render()});
+ $("sf").onclick=()=>{fin={step:0};render()};
+ $("prog").textContent=n+"/"+LES.length+" "+T(UI.done);$("pb").style.width=(100*n/LES.length)+"%";
+}
+function demoCalc(host,d){
+ const v={};d.f.forEach(f=>v[f[0]]=f[3]);
+ host.innerHTML=`<h3>${T(UI.demo)}</h3><div class="ctl">${d.f.map(f=>`<label>${esc(T([f[1],f[2]]))}<b id="v_${f[0]}">${f[3]}</b><input type="range" id="r_${f[0]}" min="${f[4]}" max="${f[5]}" step="${f[6]}" value="${f[3]}"></label>`).join("")}</div><div class="out" id="dout"></div><p class="note">${esc(T(d.note))}</p>`;
+ const upd=()=>{$("dout").innerHTML=d.calc(v).map(x=>`<div class="kpi"><span>${esc(T(x[0]))}</span><b class="${x[2]||""}">${esc(x[1])}</b></div>`).join("")};
+ d.f.forEach(f=>$("r_"+f[0]).oninput=e=>{v[f[0]]=parseFloat(e.target.value);$("v_"+f[0]).textContent=e.target.value;upd()});
+ upd();
+}
+function demoVintage(host){
+ const V=[{n:"2024-Q1",cap:4,c:"#14803c"},{n:"2024-Q3",cap:5,c:"#e0a100"},{n:"2025-Q1",cap:8,c:"#b42318"}],on=[true,true,true];
+ const W=560,H=240,pl=36,pb=26;
+ const draw=()=>{
+  const X=m=>pl+m/18*(W-pl-10),Y=r=>H-pb-r/10*(H-pb-10);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="vintage curves">`;
+  for(let r=0;r<=10;r+=2)s+=`<line x1="${pl}" x2="${W-10}" y1="${Y(r)}" y2="${Y(r)}" stroke="currentColor" opacity=".12"/><text x="4" y="${Y(r)+4}">${r}%</text>`;
+  for(let m=0;m<=18;m+=3)s+=`<text x="${X(m)-4}" y="${H-8}">${m}</text>`;
+  V.forEach((v,i)=>{if(!on[i])return;let d="";for(let m=0;m<=18;m++){const r=v.cap*(1-Math.exp(-m/9));d+=(m?"L":"M")+X(m).toFixed(1)+" "+Y(r).toFixed(1)}
+   s+=`<path d="${d}" fill="none" stroke="${v.c}" stroke-width="2.5"/>`});
+  s+=`<text x="${W-70}" y="${H-8}">MOB</text></svg>`;$("vsvg").innerHTML=s;
+  const m=6,rows=V.map((v,i)=>on[i]?`<tr><td>${v.n}</td><td>${(v.cap*(1-Math.exp(-m/9))).toFixed(2)}%</td></tr>`:"").join("");
+  $("vtab").innerHTML=`<tr><th>${L==="uk"?"Вінтаж":"Vintage"}</th><th>90+ @ MOB 6</th></tr>`+rows;
+ };
+ host.innerHTML=`<h3>${T(UI.demo)}</h3><div id="vsvg"></div><div class="top">${V.map((v,i)=>`<label style="color:${v.c}"><input type="checkbox" checked data-v="${i}"> ${v.n}</label>`).join("")}</div><table id="vtab" style="margin-top:10px"></table><p class="note">${L==="uk"?"Криві умовні (синтетичні). Вимкніть когорти й порівняйте значення на однаковому MOB.":"Curves are synthetic. Toggle cohorts and compare values at the same MOB."}</p>`;
+ host.querySelectorAll("[data-v]").forEach(c=>c.onchange=()=>{on[+c.dataset.v]=c.checked;draw()});draw();
+}
+function lesson(){
+ const i=cur,l=LES[i];
+ let h=`<div class="panel"><h2>${i+1}. ${esc(T(l.t))}</h2><div class="why"><b>${T(UI.why)}.</b> ${esc(T(l.why))}</div>`;
+ h+=l.body[L==="uk"?0:1].map(p=>`<p class="gls">${esc(p)}</p>`).join("");
+ h+=`<div class="demo" id="demo"></div>`;
+ h+=`<h3>${T(UI.cards)}</h3><div class="cards">${l.fc.map((c,k)=>`<button class="fc" data-k="${k}" data-f="0"><small>${L==="uk"?"питання":"question"}</small>${esc(T(c[0]))}</button>`).join("")}</div>`;
+ h+=`<h3>${T(UI.quiz)}</h3>`+l.q.map((q,k)=>{const a=st.ans[i+"-"+k];return `<div class="q" data-k="${k}"><p>${esc(T(q.q))}</p>${q.o.map((o,j)=>`<button class="opt ${a!==undefined?(j===q.a?"right":j===a?"wrong":""):""}" data-j="${j}">${esc(T(o))}</button>`).join("")}<div class="exp" id="e${k}">${a!==undefined?esc((a===q.a?T(UI.right):T(UI.wrong))+T(q.e)):""}</div></div>`}).join("");
+ h+=`<div class="row"><button id="pv" ${i===0?"disabled":""}>${T(UI.prev)}</button><button class="pri" id="nx">${i===LES.length-1?T(UI.final):T(UI.next)}</button></div></div>`;
+ $("main").innerHTML=h;
+ const d=l.demo;if(d==="vintage")demoVintage($("demo"));else demoCalc($("demo"),d);
+ $("main").querySelectorAll(".fc").forEach(b=>b.onclick=()=>{const c=l.fc[+b.dataset.k],f=b.dataset.f==="0";b.dataset.f=f?"1":"0";b.innerHTML=`<small>${f?(L==="uk"?"відповідь":"answer"):(L==="uk"?"питання":"question")}</small>${esc(T(f?c[1]:c[0]))}`});
+ $("main").querySelectorAll(".q").forEach(qe=>{const k=+qe.dataset.k,q=l.q[k];qe.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+  const j=+b.dataset.j;st.ans[i+"-"+k]=j;save();
+  qe.querySelectorAll(".opt").forEach(o=>{const jj=+o.dataset.j;o.className="opt "+(jj===q.a?"right":jj===j?"wrong":"")});
+  $("e"+k).textContent=(j===q.a?T(UI.right):T(UI.wrong))+T(q.e);side();})});
+ $("pv").onclick=()=>{cur--;render()};$("nx").onclick=()=>{if(i===LES.length-1)fin={step:0};else cur++;render()};
+ if(window.GL){GL.scan(document.querySelector(".gls"));document.querySelectorAll(".gls").forEach(p=>GL.scan(p))}
+}
+function finalView(){
+ const f=fin;
+ if(f.step===0){
+  $("main").innerHTML=`<div class="panel"><h2>★ ${T(UI.final)}</h2><p>${T(UI.fin.intro)}</p><button class="pri" id="fs">${T(UI.fin.start)}</button></div>`;
+  $("fs").onclick=()=>{const all=[];LES.forEach((l,i)=>l.q.forEach((q,k)=>all.push({i,q})));all.sort(()=>Math.random()-.5);fin={step:1,items:all.slice(0,10),k:0,wrong:{},ok:0};finalView()};
+ }else if(f.step===1){
+  if(f.k>=f.items.length){fin.step=2;return finalView()}
+  const it=f.items[f.k];
+  $("main").innerHTML=`<div class="panel"><h2>${f.k+1}/${f.items.length}</h2><div class="q"><p>${esc(T(it.q.q))}</p>${it.q.o.map((o,j)=>`<button class="opt" data-j="${j}">${esc(T(o))}</button>`).join("")}<div class="exp" id="fe"></div></div><div class="row"><span></span><button class="pri" id="fn" style="display:none">${T(UI.next)}</button></div></div>`;
+  $("main").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;
+   $("main").querySelectorAll(".opt").forEach(o=>{const jj=+o.dataset.j;o.className="opt "+(jj===it.q.a?"right":jj===j?"wrong":"");o.disabled=true});
+   if(j===it.q.a)f.ok++;else f.wrong[it.i]=1;
+   $("fe").textContent=(j===it.q.a?T(UI.right):T(UI.wrong))+T(it.q.e);$("fn").style.display="";});
+  $("fn").onclick=()=>{f.k++;finalView()};
+ }else{
+  const pct=Math.round(100*f.ok/f.items.length),w=Object.keys(f.wrong).map(Number).sort();
+  $("main").innerHTML=`<div class="panel"><h2>${T(UI.fin.res)}</h2><div class="big">${pct}%</div><p>${f.ok}/${f.items.length}</p><p>${w.length?esc(T(UI.fin.rev))+w.map(i=>`<a href="#" data-l="${i}">${i+1}. ${esc(T(LES[i].t))}</a>`).join("; "):T(UI.fin.all)}</p><h3>${T(UI.fin.go)}</h3><div class="top">${UI.fin.links.map(l=>`<a class="pill" href="${l[1]}">${l[0]}</a>`).join("")}</div><div class="row"><button id="fa">${T(UI.fin.again)}</button></div></div>`;
+  $("main").querySelectorAll("[data-l]").forEach(a=>a.onclick=e=>{e.preventDefault();fin=null;cur=+a.dataset.l;render()});
+  $("fa").onclick=()=>{fin={step:0};finalView()};
+ }
+}
+function render(){
+ document.documentElement.lang=L;
+ $("h1").textContent=T(UI.h1);$("sub").textContent=T(UI.sub);$("lg").textContent=L==="uk"?"EN":"UA";
+ side();if(fin)finalView();else lesson();
+ window.scrollTo(0,0);
+}
+$("lg").onclick=()=>{L=L==="uk"?"en":"uk";render()};
+render();
+window.__course={LES,UI};
+</script>
+</body>
+</html>
