@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ринок банківських кредитів України — дані НБУ / Ukrainian bank lending — NBU data</title>
+<meta name="description" content="Жива панель на відкритих даних НБУ: кредити, резерви, ROE, порівняння з вашим портфелем. Live dashboard on NBU open data.">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--mut:#5b6877;--line:#dde2e8;--acc:#0b6bcb;--c2:#d9730d;--ok:#1a7f4b;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e141b;--card:#161e27;--ink:#e6edf5;--mut:#93a1b1;--line:#263241;--acc:#5aa9ff;--c2:#f0a050;--ok:#4cc38a;--bad:#ff7b6b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 16px}
+h1{margin:0;font-size:26px}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:28px 0 10px}
+.lead{color:var(--mut);margin:6px 0 16px;max-width:760px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:99px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.k small{color:var(--mut);display:block}
+.k b{font-size:24px;display:block}
+.k span{font-size:13px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+svg{width:100%;height:auto;display:block}
+.leg{font-size:13px;color:var(--mut);display:flex;gap:16px;flex-wrap:wrap;margin-top:6px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+label{font-size:13px;color:var(--mut);display:block}
+input{font:inherit;width:140px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.note{font-size:13px;color:var(--mut)}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+a{color:var(--acc)}
+#err{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div><h1 id="h1"></h1><p class="lead" id="lead"></p></div><button id="lg">EN</button></div>
+<p><a href="index.html" id="back"></a></p>
+<div id="err"></div>
+<div class="kpis" id="kpis"></div>
+
+<h2 id="h_ch"></h2>
+<div class="card"><svg id="ch1" viewBox="0 0 800 280" role="img"></svg><div class="leg" id="leg1"></div></div>
+<div class="card"><svg id="ch2" viewBox="0 0 800 220" role="img"></svg><div class="leg" id="leg2"></div></div>
+
+<h2 id="h_st"></h2>
+<div class="card"><table id="st"></table><p class="note" id="stn"></p></div>
+
+<h2 id="h_cmp"></h2>
+<div class="card">
+<div class="row">
+<div><label id="l1"></label><input id="i1" type="number" step="0.1" value="35"></div>
+<div><label id="l2"></label><input id="i2" type="number" step="0.1" value="9"></div>
+<div><label id="l3"></label><input id="i3" type="number" step="0.1" value="8"></div>
+</div>
+<div id="cmp" style="margin-top:12px"></div>
+</div>
+
+<h2 id="h_src"></h2>
+<div class="card note" id="src"></div>
+</div>
+
+<script>
+const T={
+h1:{uk:"Ринок кредитування України: дані НБУ наживо",en:"Ukrainian bank lending: live NBU data"},
+lead:{uk:"Сторінка у вашому браузері завантажує відкриті дані НБУ та показує, що відбувається з роздрібним і корпоративним кредитуванням. Порівняйте з метриками свого (навчального) портфеля.",en:"This page pulls NBU open data in your browser and shows what is happening in retail and corporate lending. Compare it with your own (training) portfolio metrics."},
+back:{uk:"← До всіх інструментів",en:"← All tools"},
+load:{uk:"Завантажую дані НБУ…",en:"Loading NBU data…"},
+fail:{uk:"Не вдалося завантажити дані НБУ (мережа або API недоступні). Спробуйте пізніше або відкрийте джерело нижче.",en:"Could not load NBU data (network or API unavailable). Try again later or open the source below."},
+hch:{uk:"Динаміка",en:"Trends"},hst:{uk:"Структура кредитів домогосподарствам (знімок)",en:"Household loan structure (snapshot)"},
+hcmp:{uk:"Порівняйте зі своїм портфелем",en:"Compare with your portfolio"},hsrc:{uk:"Джерела й обмеження",en:"Sources and limits"},
+retail:{uk:"Роздрібні кредити",en:"Retail loans"},corp:{uk:"Кредити бізнесу",en:"Corporate loans"},
+kRetail:{uk:"Роздрібні кредити (валові)",en:"Retail loans (gross)"},kCorp:{uk:"Кредити бізнесу (валові)",en:"Corporate loans (gross)"},
+kCov:{uk:"Резерви / валові кредити клієнтам",en:"Provisions / gross customer loans"},kRoe:{uk:"ROE банківської системи",en:"Banking system ROE"},
+yoy:{uk:"до року тому",en:"year over year"},bn:{uk:"млрд грн",en:"UAH bn"},
+c1:{uk:"Валові кредити, млрд грн",en:"Gross loans, UAH bn"},c2:{uk:"Резерви / валові кредити клієнтам, %",en:"Provisions / gross customer loans, %"},
+l1:{uk:"Ріст вашого портфеля, % р/р",en:"Your portfolio growth, % YoY"},l2:{uk:"Ваше покриття резервами, %",en:"Your reserve coverage, %"},l3:{uk:"Ваша частка NPL, %",en:"Your NPL share, %"},
+stTitle:{uk:["Категорія","Млрд грн","Частка"],en:["Category","UAH bn","Share"]},
+cats:{uk:["Споживчі кредити","Іпотека","Автокредити","Інші кредити домогосподарствам","Фінансовий лізинг"],en:["Consumer credit","Mortgage","Vehicle loans","Other household loans","Financial leasing"]},
+stn:{uk:"Знімок на 01.06.2026 з набору НБУ «loan» (монетарна статистика). Він не збігається з балансовим показником «роздрібні кредити» вище, бо методологія інша. Набір завантажує ~16 МБ за дату, тому тут він не вантажиться наживо: оновіть знімок скриптом scripts/nbu_household_snapshot.py.",en:"Snapshot as of 2026-06-01 from the NBU 'loan' dataset (monetary statistics). It differs from the balance-sheet 'retail loans' above because the methodology differs. The dataset is ~16 MB per date, so it is not loaded live: refresh the snapshot with scripts/nbu_household_snapshot.py."},
+src:{uk:`<p>Джерело: <a href="https://bank.gov.ua/en/open-data/api-dev" target="_blank" rel="noopener">API відкритих даних НБУ</a>, набір basindbank (основні показники діяльності банків, місячні, млн грн), id_api: BS3_RetailLoans, BS3_CorporateLoans, BS3_LoansGrantCust, BS3_ProvAgainstAssetOper, BS3_ReturnEquity.</p>
+<p>Обмеження: (1) «Резерви» у наборі — це резерви за активними операціями загалом, не лише за кредитами, тому коефіцієнт є наближенням. (2) Різке падіння резервів у 2025–2026 імовірно, значною мірою пов'язане зі списанням і продажем старих проблемних боргів (НБУ називає це головним чинником зниження NPL), а не лише з покращенням нових видач. Окремі «сходинки» на графіках (наприклад, січень 2026) можуть бути наслідком таких разових операцій або змін у звітності: перевіряйте за примітками НБУ. (3) Порівняння з вашим портфелем орієнтовне: політики банків і методики різняться. (4) Це навчальний матеріал, не фінансова порада.</p>`,
+en:`<p>Source: <a href="https://bank.gov.ua/en/open-data/api-dev" target="_blank" rel="noopener">NBU open data API</a>, dataset basindbank (main bank indicators, monthly, UAH mn), id_api: BS3_RetailLoans, BS3_CorporateLoans, BS3_LoansGrantCust, BS3_ProvAgainstAssetOper, BS3_ReturnEquity.</p>
+<p>Limits: (1) "Provisions" in the dataset are provisions against all asset-side operations, not loans only, so the ratio is an approximation. (2) The sharp drop in provisions in 2025-2026 is likely driven largely by write-offs and sales of legacy bad debt (the NBU names this as the main driver of lower NPL), not only by better new lending. One-off 'steps' in the charts (e.g. January 2026) may reflect such operations or reporting changes: check the NBU notes. (3) The comparison with your portfolio is indicative: bank policies and methodologies differ. (4) Educational material, not financial advice.</p>`}
+};
+// Знімок структури кредитів домогосподарствам, 2026-06-01, млн грн (NBU dataset "loan")
+const SNAP={date:"2026-06-01",total:414436.8531,items:[336809.2395,58154.1968,21236.2753,26441.9735,1283.2835]};
+let L="uk",S=null;
+const API="https://bank.gov.ua/NBUStatService/v1/statdirectory/basindbank?period=m&json&date=";
+const IDS=["BS3_RetailLoans","BS3_CorporateLoans","BS3_LoansGrantCust","BS3_ProvAgainstAssetOper","BS3_ReturnEquity"];
+const $=id=>document.getElementById(id);
+const f1=x=>x.toLocaleString(L==="uk"?"uk-UA":"en-GB",{maximumFractionDigits:1,minimumFractionDigits:1});
+const f0=x=>x.toLocaleString(L==="uk"?"uk-UA":"en-GB",{maximumFractionDigits:0});
+function ym(d){return d.getFullYear()*100+d.getMonth()+1}
+async function getMonth(y,m){
+  const key=y*100+m;
+  try{
+    const r=await fetch(API+key);if(!r.ok)return null;
+    const a=await r.json();if(!a.length)return null;
+    const o={dt:a[0].dt};IDS.forEach(i=>{const x=a.find(z=>z.id_api===i);o[i]=x?x.value:null});
+    return o;
+  }catch(e){return null}
+}
+async function load(){
+  $("err").textContent=T.load[L];
+  const now=new Date(),months=[];
+  for(let i=0;i<26;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push([d.getFullYear(),d.getMonth()+1])}
+  const res=await Promise.all(months.map(([y,m])=>getMonth(y,m)));
+  const ok=res.filter(x=>x&&x.BS3_RetailLoans).sort((a,b)=>a.dt<b.dt?-1:1);
+  const uniq=[...new Map(ok.map(x=>[x.dt,x])).values()];
+  if(uniq.length<14){$("err").textContent=T.fail[L];return}
+  $("err").textContent="";S=uniq;render();
+}
+function line(svg,series,colors,fmt){
+  const W=800,H=svg.viewBox.baseVal.height,p={l:50,r:10,t:10,b:26};
+  const all=series.flat().filter(v=>v!=null),mn=Math.min(0,...all),mx=Math.max(...all)*1.08;
+  const n=S.length,x=i=>p.l+i*(W-p.l-p.r)/(n-1),y=v=>H-p.b-(v-mn)/(mx-mn)*(H-p.t-p.b);
+  let o="";
+  for(let k=0;k<=4;k++){const v=mn+(mx-mn)*k/4;o+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${p.l-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mut)">${fmt(v)}</text>`}
+  S.forEach((s,i)=>{if(i%4===0||i===n-1)o+=`<text x="${x(i)}" y="${H-8}" text-anchor="${i===n-1?'end':'middle'}" font-size="11" fill="var(--mut)">${s.dt.slice(4,6)}.${s.dt.slice(2,4)}</text>`});
+  series.forEach((ser,j)=>{
+    const pts=ser.map((v,i)=>v==null?null:`${x(i)},${y(v)}`).filter(Boolean).join(" ");
+    o+=`<polyline fill="none" stroke="${colors[j]}" stroke-width="2.5" points="${pts}"/>`});
+  svg.innerHTML=o;
+}
+function render(){
+  const last=S[S.length-1],prev=S.find(s=>s.dt.slice(4,6)===last.dt.slice(4,6)&&+s.dt.slice(0,4)===+last.dt.slice(0,4)-1)||S[S.length-13];
+  const g=(a,b)=>(a/b-1)*100,cov=s=>s.BS3_ProvAgainstAssetOper/s.BS3_LoansGrantCust*100;
+  S.cov=S.map(cov);
+  const gr=g(last.BS3_RetailLoans,prev.BS3_RetailLoans),gc=g(last.BS3_CorporateLoans,prev.BS3_CorporateLoans);
+  S.last=last;S.gr=gr;S.gc=gc;S.covNow=cov(last);S.covPrev=cov(prev);
+  const d=last.dt.slice(0,4)+"-"+last.dt.slice(4,6);
+  $("kpis").innerHTML=[
+    [T.kRetail[L],f0(last.BS3_RetailLoans/1000)+" "+T.bn[L],(gr>=0?"+":"")+f1(gr)+"% "+T.yoy[L]],
+    [T.kCorp[L],f0(last.BS3_CorporateLoans/1000)+" "+T.bn[L],(gc>=0?"+":"")+f1(gc)+"% "+T.yoy[L]],
+    [T.kCov[L],f1(S.covNow)+"%",f1(S.covPrev)+"% "+T.yoy[L].replace("до року тому","рік тому")],
+    [T.kRoe[L],f1(last.BS3_ReturnEquity)+"%",f1(prev.BS3_ReturnEquity)+"% "+T.yoy[L].replace("до року тому","рік тому")]
+  ].map(k=>`<div class="k"><small>${k[0]} · ${d}</small><b>${k[1]}</b><span>${k[2]}</span></div>`).join("");
+  line($("ch1"),[S.map(s=>s.BS3_RetailLoans/1000),S.map(s=>s.BS3_CorporateLoans/1000)],["var(--acc)","var(--c2)"],v=>f0(v));
+  $("leg1").innerHTML=`<span><i style="background:var(--acc)"></i>${T.retail[L]}</span><span><i style="background:var(--c2)"></i>${T.corp[L]}</span><span>${T.c1[L]}</span>`;
+  line($("ch2"),[S.cov],["var(--acc)"],v=>f0(v)+"%");
+  $("leg2").innerHTML=`<span><i style="background:var(--acc)"></i>${T.c2[L]}</span>`;
+  const tb=SNAP.items.map((v,i)=>`<tr><td>${T.cats[L][i]}</td><td>${f1(v/1000)}</td><td>${f1(v/SNAP.total*100)}%</td></tr>`).join("");
+  $("st").innerHTML=`<tr>${T.stTitle[L].map(h=>`<th>${h}</th>`).join("")}</tr>${tb}<tr><td><b>Σ</b></td><td><b>${f1(SNAP.total/1000)}</b></td><td></td></tr>`;
+  compare();
+}
+function compare(){
+  if(!S||!S.last)return;
+  const a=+$("i1").value,c=+$("i2").value,n=+$("i3").value;
+  const msg=(uk,en,cls)=>`<p class="${cls}">${L==="uk"?uk:en}</p>`;
+  let h="";
+  h+=a>S.gr?msg(`Ваш ріст (${f1(a)}%) випереджає ринок роздрібу (${f1(S.gr)}%): перевірте якість нових вінтажів.`,`Your growth (${f1(a)}%) outpaces retail market (${f1(S.gr)}%): check new vintage quality.`,"bad")
+         :msg(`Ваш ріст (${f1(a)}%) не перевищує ринок роздрібу (${f1(S.gr)}%).`,`Your growth (${f1(a)}%) does not exceed retail market (${f1(S.gr)}%).`,"good");
+  h+=c<S.covNow?msg(`Покриття резервами ${f1(c)}% нижче за ринкове наближення ${f1(S.covNow)}%: перевірте, чи це не недорезервування.`,`Coverage ${f1(c)}% is below the market proxy ${f1(S.covNow)}%: check for under-provisioning.`,"bad")
+         :msg(`Покриття резервами ${f1(c)}% не нижче за ринкове наближення ${f1(S.covNow)}%.`,`Coverage ${f1(c)}% is at or above the market proxy ${f1(S.covNow)}%.`,"good");
+  h+=msg(`Покриття NPL резервами: ${n>0?f1(c/n*100)+"%":"—"}. Орієнтир НБУ щодо NPL банківської системи шукайте у свіжому Звіті про фінансову стабільність.`,`NPL coverage: ${n>0?f1(c/n*100)+"%":"—"}. For NPL benchmarks see the latest NBU Financial Stability Report.`,"");
+  $("cmp").innerHTML=h;
+}
+function tr(){
+  document.documentElement.lang=L;
+  $("h1").textContent=T.h1[L];$("lead").textContent=T.lead[L];$("back").textContent=T.back[L];
+  $("h_ch").textContent=T.hch[L];$("h_st").textContent=T.hst[L];$("h_cmp").textContent=T.hcmp[L];$("h_src").textContent=T.hsrc[L];
+  $("l1").textContent=T.l1[L];$("l2").textContent=T.l2[L];$("l3").textContent=T.l3[L];
+  $("stn").textContent=T.stn[L];$("src").innerHTML=T.src[L];$("lg").textContent=L==="uk"?"EN":"UA";
+  if(S)render();
+}
+$("lg").onclick=()=>{L=L==="uk"?"en":"uk";tr()};
+["i1","i2","i3"].forEach(i=>$(i).oninput=compare);
+tr();load();
+</script>
+</body>
+</html>

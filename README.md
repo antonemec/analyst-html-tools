@@ -12,10 +12,11 @@
 | Сторінка / Page | Опис / Description |
 |---|---|
 | [`index.html`](index.html) | Головна: навігація між усіма інструментами / hub |
-| [`sql-trainer.html`](sql-trainer.html) | 18 SQL-завдань (Easy → Hard) з автоперевіркою; SQLite (sql.js) у браузері; синтетичні дані: 400 клієнтів, ~530 карток, ~50 тис. транзакцій, 12 місяців знімків прострочки |
+| [`sql-trainer.html`](sql-trainer.html) | 23 SQL-завдання (Easy → Hard) з автоперевіркою; SQLite (sql.js) у браузері; синтетичні дані: 400 клієнтів, ~530 карток, ~50 тис. транзакцій, 12 місяців знімків прострочки |
 | [`course-credit-cards.html`](course-credit-cards.html) | Мінікурс «Кредитні картки за 7 уроків»: DPD, roll rate, вінтажі, NPL і CoR, ECL, економіка картки, діагностика; інтерактивні демо, картки, квізи, підсумкове повторення |
 | [`metrics-calculator.html`](metrics-calculator.html) | EAR і пільговий період, roll rate і NPL, ECL = PD×LGD×EAD, економіка картки (unit economics) |
 | [`interview-trainer.html`](interview-trainer.html) | 29 питань із відповідями; слабкі питання повертаються частіше; режим мок-співбесіди на 10 питань із таймером і підсумком за темами |
+| [`nbu-market.html`](nbu-market.html) | Жива панель на відкритому API НБУ: роздрібні й корпоративні кредити, резерви, ROE, структура кредитів домогосподарствам, порівняння з вашим портфелем (UA/EN). Скрипт оновлення знімка: `scripts/nbu_household_snapshot.py` |
 | [`sql_keys.html`](sql_keys.html), [`problem_solving.html`](problem_solving.html), [`game.html`](game.html), [`audit.html`](audit.html) | Раніші навчальні сторінки / earlier study pages |
 
 Усі інтерфейси двомовні (UA/EN). All interfaces are bilingual.

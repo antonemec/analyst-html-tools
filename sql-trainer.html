@@ -261,7 +261,32 @@ const TASKS=[
  t:["Вінтажі: прострочка за роком відкриття","Vintage delinquency by open year"],
  d:["Для кожного року відкриття картки (substr(open_date,1,4)) — частка карток із dpd>30 у знімку 2026-09-01 серед карток цього вінтажу, що мають знімок за цей місяць. Колонки: vintage, cards, dpd30_pct (ROUND 2). Сортуйте за vintage.","For each card open year (substr(open_date,1,4)) — the share of cards with dpd>30 in the 2026-09-01 snapshot among cards of that vintage that have a snapshot that month. Columns: vintage, cards, dpd30_pct (ROUND 2). Sort by vintage."],
  h:["JOIN snapshots і cards, фільтр за місяцем, GROUP BY vintage.","JOIN snapshots and cards, filter the month, GROUP BY vintage."],
- s:"SELECT substr(c.open_date,1,4) AS vintage, COUNT(*), ROUND(100.0*SUM(s.dpd>30)/COUNT(*),2) FROM monthly_snapshots s JOIN cards c ON c.card_id=s.card_id WHERE s.month='2026-09-01' GROUP BY vintage ORDER BY vintage;"}
+ s:"SELECT substr(c.open_date,1,4) AS vintage, COUNT(*), ROUND(100.0*SUM(s.dpd>30)/COUNT(*),2) FROM monthly_snapshots s JOIN cards c ON c.card_id=s.card_id WHERE s.month='2026-09-01' GROUP BY vintage ORDER BY vintage;"},
+{lv:"Medium",ord:false,
+ t:["NPL 90+ за балансом","NPL 90+ by balance"],
+ d:["Частка NPL у портфелі за сумою балансу: сума balance карток із dpd >= 90 до суми balance усіх карток у знімку 2026-09-01, у відсотках, ROUND(…,2). (Типова вимога вакансій аналітика ризиків: рахувати NPL, а не лише кількість карток.)","NPL share by balance: sum of balance for cards with dpd >= 90 divided by total balance in the 2026-09-01 snapshot, in percent, ROUND(…,2). (A typical risk-analyst job requirement: compute NPL by exposure, not only by card count.)"],
+ h:["SUM(CASE WHEN dpd>=90 THEN balance END) / SUM(balance).","SUM(CASE WHEN dpd>=90 THEN balance END) / SUM(balance)."],
+ s:"SELECT ROUND(100.0*SUM(CASE WHEN dpd>=90 THEN balance ELSE 0 END)/SUM(balance),2) FROM monthly_snapshots WHERE month='2026-09-01';"},
+{lv:"Medium",ord:true,
+ t:["Approval rate за регіоном","Approval rate by region"],
+ d:["Для кожного регіону клієнта — частка схвалених транзакцій у відсотках, ROUND(…,2). Колонки: region, approval_rate. Сортуйте за approval_rate за спаданням, потім за region.","For each customer region — share of approved transactions in percent, ROUND(…,2). Columns: region, approval_rate. Sort by approval_rate descending, then region."],
+ h:["Три JOIN: transactions → cards → customers.","Three JOINs: transactions → cards → customers."],
+ s:"SELECT cu.region, ROUND(100.0*SUM(t.status='approved')/COUNT(*),2) AS ar FROM transactions t JOIN cards c ON c.card_id=t.card_id JOIN customers cu ON cu.customer_id=c.customer_id GROUP BY cu.region ORDER BY ar DESC, cu.region;"},
+{lv:"Medium",ord:false,
+ t:["Цільова аудиторія для кампанії","Campaign target audience"],
+ d:["Маркетингова кампанія з підвищення лімітів: скільки клієнтів мають активну картку з dpd=0 у знімку 2026-09-01, утилізацією balance/credit_limit > 0.6 і сегмент 'affluent' або 'premium'? Рахуйте унікальних клієнтів. (Сегментація цільових груп — типове завдання банківського аналітика.)","Limit-increase marketing campaign: how many customers have an active card with dpd=0 in the 2026-09-01 snapshot, utilization balance/credit_limit > 0.6 and segment 'affluent' or 'premium'? Count distinct customers. (Target-group segmentation is a typical banking analyst task.)"],
+ h:["COUNT(DISTINCT customer_id), три JOIN/умови.","COUNT(DISTINCT customer_id) with the joins and conditions."],
+ s:"SELECT COUNT(DISTINCT cu.customer_id) FROM monthly_snapshots s JOIN cards c ON c.card_id=s.card_id JOIN customers cu ON cu.customer_id=c.customer_id WHERE s.month='2026-09-01' AND c.status='active' AND s.dpd=0 AND s.balance*1.0/c.credit_limit>0.6 AND cu.segment IN ('affluent','premium');"},
+{lv:"Medium",ord:false,
+ t:["Якість даних: прогалини в знімках","Data quality: snapshot gaps"],
+ d:["Перевірка якості перед аналізом: скільки карток мають менше 12 місячних знімків у monthly_snapshots (включно з картками без жодного знімка)? Одне число.","Pre-analysis data quality check: how many cards have fewer than 12 monthly snapshots in monthly_snapshots (including cards with no snapshot at all)? Single number."],
+ h:["LEFT JOIN cards → snapshots, GROUP BY card_id, HAVING COUNT(s.month)<12.","LEFT JOIN cards → snapshots, GROUP BY card_id, HAVING COUNT(s.month)<12."],
+ s:"SELECT COUNT(*) FROM (SELECT c.card_id FROM cards c LEFT JOIN monthly_snapshots s ON s.card_id=c.card_id GROUP BY c.card_id HAVING COUNT(s.month)<12);"},
+{lv:"Hard",ord:false,
+ t:["Стрес-тест: ріст NPL","Stress test: NPL growth"],
+ d:["Простий стрес-сценарій: усі картки із dpd від 31 до 89 у знімку 2026-09-01 переходять у NPL. Яка частка NPL за балансом стане після сценарію (поточний NPL dpd>=90 + ці картки)? Відсоток, ROUND(…,2). (Портфельний аналіз і стрес-тестування — окрема позиція в банках.)","Simple stress scenario: all cards with dpd 31–89 in the 2026-09-01 snapshot become NPL. What NPL share by balance results (current NPL dpd>=90 plus those cards)? Percent, ROUND(…,2). (Portfolio analysis and stress testing is a separate role in banks.)"],
+ h:["SUM balance для dpd>=31 / SUM balance усіх.","SUM balance where dpd>=31 / SUM balance of all."],
+ s:"SELECT ROUND(100.0*SUM(CASE WHEN dpd>=31 THEN balance ELSE 0 END)/SUM(balance),2) FROM monthly_snapshots WHERE month='2026-09-01';"}
 ];
 
 /* ---------- App ---------- */
